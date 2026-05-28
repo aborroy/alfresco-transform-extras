@@ -54,8 +54,6 @@ make build-xml
 make run-engine ENGINE=xml PORT=8090
 ```
 
----
-
 ## Deployment — Community Edition
 
 ACS Community communicates with T-Engines over **direct HTTP** using `localTransform.*` properties. No ActiveMQ or Shared File Store is required.
@@ -102,8 +100,6 @@ alfresco:
 
 > **ACS 7.4+:** Slow transforms (OCR on dense PDFs, Whisper transcription) may exceed the default
 > HTTP timeout. Set `httpclient.config.transform.socketTimeout=500000` in `alfresco-global.properties`.
-
----
 
 ## Deployment — Enterprise Edition
 
@@ -157,8 +153,6 @@ transform-router:
 | `whisper` | `whisper-engine-queue` |
 | `xml` | `xml-engine-queue` |
 
----
-
 ## Transform options
 
 These options can be passed as request parameters to `/transform` or configured via Alfresco's transform pipeline rules.
@@ -173,8 +167,6 @@ These options can be passed as request parameters to `/transform` or configured 
 | `md2doc` | `tocDepth` | integer | `3` | Maximum heading depth in the TOC |
 | `whisper` | `model` | string | `base` | Whisper model: `tiny`, `base`, `small`, `medium`, `large` |
 | `videothumb` | `timeOffset` | integer | `1` | Seconds into the video for the thumbnail frame |
-
----
 
 ## Scaling
 
@@ -204,8 +196,6 @@ environment:
     -Dspring.servlet.multipart.max-request-size=200MB
 ```
 
----
-
 ## Security
 
 - All engine containers run as a **non-root user** (`alfte`, UID 33017).
@@ -213,8 +203,6 @@ environment:
 - **Do not expose port 8090 on the public internet.** Engines are internal services intended to be accessed only by ACS or the Transform Router.
 - For network isolation in production, place engines on a dedicated internal Docker network or use Kubernetes `NetworkPolicy` to restrict ingress to the Transform Router and block all egress.
 - The `pii` engine processes document content containing sensitive data. Ensure the container host, Docker volumes, and any temp file paths are secured appropriately.
-
----
 
 ## Version pinning
 
@@ -234,8 +222,6 @@ Override at build time:
 make build PANDOC_VERSION=3.5 TESSERACT_LANGUAGES=eng,spa,fra
 make build-ocr OCRMYPDF_VERSION=16 TESSERACT_LANGUAGES=eng,deu
 ```
-
----
 
 ## Makefile reference
 
@@ -278,8 +264,6 @@ make buildx-ocr TESSERACT_LANGUAGES=eng,spa,fra OCRMYPDF_VERSION=16
 make buildx BUILDER=my-builder
 ```
 
----
-
 ## Superseded projects
 
 This project consolidates the following standalone repositories, which are no longer maintained individually:
@@ -294,8 +278,6 @@ This project consolidates the following standalone repositories, which are no lo
 | [alf-tengine-xml](https://github.com/aborroy/alf-tengine-xml) | `xml` |
 | [alf-tengine-excel](https://github.com/aborroy/alf-tengine-excel) | `excel` |
 
----
-
 ## Compatibility
 
 Inherits from `org.alfresco:alfresco-transform-core:5.4.1`. Engines work alongside the official AIO (`imagemagick`, `libreoffice`, `tika`, `pdfrenderer`, `misc`) behind an Alfresco Transform Router.
@@ -307,28 +289,3 @@ Inherits from `org.alfresco:alfresco-transform-core:5.4.1`. Engines work alongsi
 | 25.x | `localTransform.*` properties | Transform Router + ActiveMQ |
 
 Minimum Java version: **17** (required by ACS 25.2+).
-
----
-
-## Project structure
-
-```
-engines/
-  <name>/
-    src/main/java/org/alfresco/transform/<name>/
-      <Name>Engine.java          # TransformEngine — registers the engine
-      <Name>Transformer.java     # CustomTransformer — does the work
-      <Name>Service.java         # wraps the external CLI tool
-    src/main/resources/
-      <name>_engine_config.json  # supported MIME type pairs + options
-      application-default.yaml  # queue name, tool defaults
-      sample.<ext>               # probe transform file
-    Dockerfile                   # standalone image
-    pom.xml
-  aio/
-    pom.xml                      # assembly: depends on all engines → single fat JAR
-Dockerfile                       # AIO multi-stage image
-compose.yaml
-Makefile
-docker/presidio/                 # Python scripts for PII engine
-```
