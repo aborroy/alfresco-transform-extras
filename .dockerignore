@@ -1,0 +1,17 @@
+# Build output
+**/target/
+
+# Version control
+.git/
+.gitignore
+
+# Documentation & IDE
+*.md
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Claude Code
+CLAUDE.md
+.claude/

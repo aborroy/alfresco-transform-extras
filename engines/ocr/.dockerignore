@@ -1,0 +1,12 @@
+# Build output
+target/
+
+# Version control & IDE
+.git/
+.gitignore
+*.md
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
