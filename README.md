@@ -50,19 +50,171 @@ make test     # lists all 15 transformer names
 ### Single engine
 
 ```bash
-# Build one engine image
 make build-xml
-
-# Run it
 make run-engine ENGINE=xml PORT=8090
 ```
 
-Or with Docker directly:
+---
 
-```bash
-docker build -t alf-tengine-xml engines/xml/
-docker run -p 8090:8090 -e MANAGEMENT_HEALTH_JMS_ENABLED=false alf-tengine-xml
+## Deployment — Community Edition
+
+ACS Community communicates with T-Engines over **direct HTTP** using `localTransform.*` properties. No ActiveMQ or Shared File Store is required.
+
+### AIO (all 14 engines in one container)
+
+Add to `alfresco-global.properties` (or as `-D` flags in `JAVA_OPTS`):
+
+```properties
+localTransform.core-aio.url=http://transform-extras-aio:8090/
 ```
+
+### Individual engines
+
+Run only the engines you need alongside the official AIO:
+
+```properties
+# Keep the official AIO for built-in transforms
+localTransform.core-aio.url=http://transform-core-aio:8090/
+
+# Register additional engines individually
+localTransform.ocr.url=http://transform-ocr:8090/
+localTransform.xml.url=http://transform-xml:8090/
+localTransform.md2doc.url=http://transform-md2doc:8090/
+localTransform.pii.url=http://transform-pii:8090/
+```
+
+### Docker Compose example
+
+Add to your ACS Compose file:
+
+```yaml
+transform-ocr:
+  image: angelborroy/alf-tengine-ocr:latest
+  environment:
+    JAVA_OPTS: "-Xms256m -Xmx512m"
+
+alfresco:
+  environment:
+    JAVA_OPTS: >-
+      -DlocalTransform.core-aio.url=http://transform-core-aio:8090/
+      -DlocalTransform.ocr.url=http://transform-ocr:8090/
+```
+
+> **ACS 7.4+:** Slow transforms (OCR on dense PDFs, Whisper transcription) may exceed the default
+> HTTP timeout. Set `httpclient.config.transform.socketTimeout=500000` in `alfresco-global.properties`.
+
+---
+
+## Deployment — Enterprise Edition
+
+ACS Enterprise routes transforms **asynchronously** through a Transform Router backed by ActiveMQ and a Shared File Store.
+
+### Engine container
+
+Each engine container requires connectivity to ActiveMQ and Shared File Store:
+
+```yaml
+transform-ocr:
+  image: angelborroy/alf-tengine-ocr:latest
+  environment:
+    ACTIVEMQ_URL: "nio://activemq:61616"
+    FILE_STORE_URL: "http://shared-file-store:8099/alfresco/api/-default-/private/sfs/versions/1/file"
+    JAVA_OPTS: "-Xms256m -Xmx512m"
+```
+
+### Transform Router configuration
+
+Register each engine with the router using a URL + queue name pair:
+
+```yaml
+transform-router:
+  environment:
+    TRANSFORMER_URL_OCR: "http://transform-ocr:8090"
+    TRANSFORMER_QUEUE_OCR: "ocr-engine-queue"
+    TRANSFORMER_URL_XML: "http://transform-xml:8090"
+    TRANSFORMER_QUEUE_XML: "xml-engine-queue"
+    TRANSFORMER_URL_MD2DOC: "http://transform-md2doc:8090"
+    TRANSFORMER_QUEUE_MD2DOC: "md2doc-engine-queue"
+    # ... one pair per deployed engine
+```
+
+### Queue names
+
+| Engine | `TRANSFORMER_QUEUE_*` value |
+|--------|----------------------------|
+| `convert2md` | `convert2md-engine-queue` |
+| `excel` | `excel-engine-queue` |
+| `heic` | `heic-engine-queue` |
+| `html2md` | `html2md-engine-queue` |
+| `markdown` | `markdown-engine-queue` |
+| `md2doc` | `md2doc-engine-queue` |
+| `md2html` | `md2html-engine-queue` |
+| `msg` | `msg-engine-queue` |
+| `ocr` | `ocr-engine-queue` |
+| `pdf2docx` | `pdf2docx-engine-queue` |
+| `pii` | `pii-engine-queue` |
+| `videothumb` | `videothumb-engine-queue` |
+| `whisper` | `whisper-engine-queue` |
+| `xml` | `xml-engine-queue` |
+
+---
+
+## Transform options
+
+These options can be passed as request parameters to `/transform` or configured via Alfresco's transform pipeline rules.
+
+| Engine | Option | Type | Default | Description |
+|--------|--------|------|---------|-------------|
+| `ocr` | `language` | string | `eng` | Tesseract language code(s), e.g. `spa`, `fra+eng` |
+| `pii` | `entities` | string | `PERSON,PHONE_NUMBER,EMAIL_ADDRESS` | Comma-separated Presidio entity types to detect |
+| `pii` | `scoreThreshold` | double | `0.5` | Minimum Presidio confidence score (0.0–1.0) |
+| `pii` | `label` | string | `[REDACTED]` | Replacement text for redacted content |
+| `md2doc` | `tocEnabled` | boolean | `false` | Generate a table of contents |
+| `md2doc` | `tocDepth` | integer | `3` | Maximum heading depth in the TOC |
+| `whisper` | `model` | string | `base` | Whisper model: `tiny`, `base`, `small`, `medium`, `large` |
+| `videothumb` | `timeOffset` | integer | `1` | Seconds into the video for the thumbnail frame |
+
+---
+
+## Scaling
+
+**Horizontal scaling** is supported for all engines. In Enterprise mode the Transform Router distributes requests across all replicas of the same engine automatically (multiple containers reading from the same ActiveMQ queue). In Community mode use a reverse proxy (nginx, Traefik) in front of multiple instances.
+
+**Memory requirements** vary significantly:
+
+| Engine | Minimum | Notes |
+|--------|---------|-------|
+| `convert2md` | 4 GB | Docling loads a PyTorch model |
+| `whisper` (large) | 8 GB | Model size scales with quality |
+| `pii` | 2 GB | spaCy `en_core_web_lg` model |
+| All others | 512 MB | Java + lightweight external tool |
+
+**Timeout**: OCR on dense PDFs and Whisper transcription of long files can take minutes. Set a generous socket timeout in ACS:
+
+```properties
+httpclient.config.transform.socketTimeout=500000
+```
+
+**File size limits** default to 50–100 MB per engine. Override with environment variables on the engine container:
+
+```yaml
+environment:
+  JAVA_OPTS: >-
+    -Dspring.servlet.multipart.max-file-size=200MB
+    -Dspring.servlet.multipart.max-request-size=200MB
+```
+
+---
+
+## Security
+
+- All engine containers run as a **non-root user** (`alfte`, UID 33017).
+- Engines have no external network dependencies at runtime — no outbound calls after startup. The `pii` engine loads Presidio models from the image; `convert2md` loads Docling models from the image.
+- **Do not expose port 8090 on the public internet.** Engines are internal services intended to be accessed only by ACS or the Transform Router.
+- For network isolation in production, place engines on a dedicated internal Docker network or use Kubernetes `NetworkPolicy` to restrict ingress to the Transform Router and block all egress.
+- The `pii` engine processes document content containing sensitive data. Ensure the container host, Docker volumes, and any temp file paths are secured appropriately.
+
+---
 
 ## Version pinning
 
@@ -82,6 +234,8 @@ Override at build time:
 make build PANDOC_VERSION=3.5 TESSERACT_LANGUAGES=eng,spa,fra
 make build-ocr OCRMYPDF_VERSION=16 TESSERACT_LANGUAGES=eng,deu
 ```
+
+---
 
 ## Makefile reference
 
@@ -105,6 +259,10 @@ make run-engine ENGINE=<name> PORT=<port>
 make test                   List transformer names on localhost:8090
 make health                 Health check on localhost:8090
 
+# Integration tests (requires Docker, images must be built first)
+make integration-test ENGINE=<name>
+make integration-test-all
+
 # Push (single-platform)
 make push / push-engines / push-all
 
@@ -113,11 +271,14 @@ make clean-all
 ```
 
 Override variables on any target:
+
 ```bash
 make buildx PLATFORMS=linux/amd64,linux/arm64 VERSION=1.0.0
 make buildx-ocr TESSERACT_LANGUAGES=eng,spa,fra OCRMYPDF_VERSION=16
 make buildx BUILDER=my-builder
 ```
+
+---
 
 ## Superseded projects
 
@@ -133,15 +294,21 @@ This project consolidates the following standalone repositories, which are no lo
 | [alf-tengine-xml](https://github.com/aborroy/alf-tengine-xml) | `xml` |
 | [alf-tengine-excel](https://github.com/aborroy/alf-tengine-excel) | `excel` |
 
+---
+
 ## Compatibility
 
 Inherits from `org.alfresco:alfresco-transform-core:5.4.1`. Engines work alongside the official AIO (`imagemagick`, `libreoffice`, `tika`, `pdfrenderer`, `misc`) behind an Alfresco Transform Router.
 
-To register an individual engine with a Community deployment add to `alfresco-global.properties`:
+| ACS version | Community | Enterprise |
+|-------------|-----------|------------|
+| 7.x | `localTransform.*` properties | Transform Router + ActiveMQ |
+| 23.x | `localTransform.*` properties | Transform Router + ActiveMQ |
+| 25.x | `localTransform.*` properties | Transform Router + ActiveMQ |
 
-```properties
-localTransform.ocr.url=http://localhost:8090/
-```
+Minimum Java version: **17** (required by ACS 25.2+).
+
+---
 
 ## Project structure
 
