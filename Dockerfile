@@ -17,9 +17,34 @@ ARG JAVA_BASE=eclipse-temurin:17-jre
 # ── Stage 1: Maven build ──────────────────────────────────────────────────────
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /build
+
+# Copy all pom.xml files first — Docker caches this layer separately from sources.
+# Dependency downloads are only re-triggered when a pom changes, not on source edits.
 COPY pom.xml .
+COPY engines/aio/pom.xml        engines/aio/pom.xml
+COPY engines/convert2md/pom.xml engines/convert2md/pom.xml
+COPY engines/excel/pom.xml      engines/excel/pom.xml
+COPY engines/heic/pom.xml       engines/heic/pom.xml
+COPY engines/html2md/pom.xml    engines/html2md/pom.xml
+COPY engines/markdown/pom.xml   engines/markdown/pom.xml
+COPY engines/md2doc/pom.xml     engines/md2doc/pom.xml
+COPY engines/md2html/pom.xml    engines/md2html/pom.xml
+COPY engines/msg/pom.xml        engines/msg/pom.xml
+COPY engines/ocr/pom.xml        engines/ocr/pom.xml
+COPY engines/pdf2docx/pom.xml   engines/pdf2docx/pom.xml
+COPY engines/pii/pom.xml        engines/pii/pom.xml
+COPY engines/videothumb/pom.xml engines/videothumb/pom.xml
+COPY engines/whisper/pom.xml    engines/whisper/pom.xml
+COPY engines/xml/pom.xml        engines/xml/pom.xml
+
+# Download all dependencies (cached as a separate layer; only re-runs when a pom changes)
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn dependency:go-offline --batch-mode -q
+
+# Now copy sources and build
 COPY engines/ engines/
-RUN mvn clean package -DskipTests --batch-mode -Dmaven.repo.local=/root/.m2
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package -DskipTests --batch-mode
 
 # ── Stage 2: Python dependencies ─────────────────────────────────────────────
 FROM python:3.11-slim AS python-deps
@@ -27,7 +52,8 @@ ARG OCRMYPDF_VERSION
 ARG WHISPER_VERSION
 ARG PDF2DOCX_VERSION
 
-RUN pip install --no-cache-dir \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install \
     "ocrmypdf==${OCRMYPDF_VERSION}" \
     "openai-whisper==${WHISPER_VERSION}" \
     "pdf2docx==${PDF2DOCX_VERSION}" \
