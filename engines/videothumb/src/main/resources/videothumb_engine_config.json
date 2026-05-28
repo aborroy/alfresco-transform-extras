@@ -1,0 +1,20 @@
+{
+  "transformOptions": {
+    "videoThumbOptions": [
+      { "value": { "name": "timeOffset" } }
+    ]
+  },
+  "transformers": [
+    {
+      "transformerName": "videothumb",
+      "supportedSourceAndTargetList": [
+        {"sourceMediaType": "video/mp4",         "targetMediaType": "image/jpeg", "maxSourceSizeBytes": 524288000},
+        {"sourceMediaType": "video/quicktime",   "targetMediaType": "image/jpeg", "maxSourceSizeBytes": 524288000},
+        {"sourceMediaType": "video/x-msvideo",  "targetMediaType": "image/jpeg", "maxSourceSizeBytes": 524288000},
+        {"sourceMediaType": "video/x-matroska", "targetMediaType": "image/jpeg", "maxSourceSizeBytes": 524288000},
+        {"sourceMediaType": "video/webm",        "targetMediaType": "image/jpeg", "maxSourceSizeBytes": 524288000}
+      ],
+      "transformOptions": ["videoThumbOptions"]
+    }
+  ]
+}

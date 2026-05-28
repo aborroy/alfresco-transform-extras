@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>alf-tengine-aio-app</artifactId>
+  <version>1.0.0</version>
+  <name>Alfresco Transform Extras - AIO Assembly</name>
+
+  <parent>
+    <groupId>org.alfresco.transform.extras</groupId>
+    <artifactId>alfresco-transform-extras</artifactId>
+    <version>1.0.0</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <!--
+    This module depends on all engine JARs. Spring Boot repackage
+    produces a single fat JAR that includes every engine's @Component
+    classes, which are auto-discovered by Spring's component scan.
+  -->
+  <dependencies>
+    <!-- Core Spring Boot runtime -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco</groupId>
+      <artifactId>alfresco-base-t-engine</artifactId>
+    </dependency>
+
+    <!-- All engine modules -->
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-convert2md</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-md2doc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-ocr</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-pii</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-xml</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-excel</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-markdown</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-html2md</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-whisper</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-msg</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-pdf2docx</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-md2html</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-videothumb</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-heic</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>alf-tengine-aio</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>org.alfresco.transform.base.Application</mainClass>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

@@ -1,0 +1,18 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+management:
+  health:
+    jms:
+      enabled: ${MANAGEMENT_HEALTH_JMS_ENABLED:false}
+queue:
+  engineRequestQueue: pii-engine-queue
+transform:
+  core:
+    version: 5.4.1
+  presidio:
+    script:
+      redact: /opt/presidio/redact.py
+      analyze: /opt/presidio/analyze.py

@@ -1,0 +1,14 @@
+{
+  "transformers": [
+    {
+      "transformerName": "pdf2docx",
+      "supportedSourceAndTargetList": [
+        {
+          "sourceMediaType": "application/pdf",
+          "targetMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "maxSourceSizeBytes": 52428800
+        }
+      ]
+    }
+  ]
+}

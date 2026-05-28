@@ -1,0 +1,17 @@
+{
+  "transformers": [
+    {
+      "transformerName": "md2html",
+      "supportedSourceAndTargetList": [
+        {
+          "sourceMediaType": "text/markdown",
+          "targetMediaType": "text/html"
+        },
+        {
+          "sourceMediaType": "text/x-markdown",
+          "targetMediaType": "text/html"
+        }
+      ]
+    }
+  ]
+}

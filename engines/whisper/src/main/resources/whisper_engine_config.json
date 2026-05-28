@@ -1,0 +1,23 @@
+{
+  "transformOptions": {
+    "whisperOptions": [
+      { "value": { "name": "model" } }
+    ]
+  },
+  "transformers": [
+    {
+      "transformerName": "whisper",
+      "supportedSourceAndTargetList": [
+        {"sourceMediaType": "audio/mpeg",        "targetMediaType": "text/plain"},
+        {"sourceMediaType": "audio/wav",         "targetMediaType": "text/plain"},
+        {"sourceMediaType": "audio/ogg",         "targetMediaType": "text/plain"},
+        {"sourceMediaType": "audio/flac",        "targetMediaType": "text/plain"},
+        {"sourceMediaType": "video/mp4",         "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000},
+        {"sourceMediaType": "video/quicktime",   "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000},
+        {"sourceMediaType": "video/x-msvideo",  "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000},
+        {"sourceMediaType": "video/x-matroska", "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000}
+      ],
+      "transformOptions": ["whisperOptions"]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "transformers": [
+    {
+      "transformerName": "heic",
+      "supportedSourceAndTargetList": [
+        {"sourceMediaType": "image/heic", "targetMediaType": "image/jpeg"},
+        {"sourceMediaType": "image/heic", "targetMediaType": "image/png"},
+        {"sourceMediaType": "image/heif", "targetMediaType": "image/jpeg"},
+        {"sourceMediaType": "image/heif", "targetMediaType": "image/png"}
+      ]
+    }
+  ]
+}

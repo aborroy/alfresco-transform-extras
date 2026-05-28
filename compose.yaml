@@ -1,0 +1,22 @@
+services:
+  tengine-aio:
+    build:
+      context: .
+      args:
+        PANDOC_VERSION: "${PANDOC_VERSION:-3.9.0.2}"
+        OCRMYPDF_VERSION: "${OCRMYPDF_VERSION:-17.5.0}"
+        TESSERACT_LANGUAGES: "${TESSERACT_LANGUAGES:-eng}"
+        WHISPER_VERSION: "${WHISPER_VERSION:-20250625}"
+        PDF2DOCX_VERSION: "${PDF2DOCX_VERSION:-0.5.13}"
+    image: angelborroy/alf-tengine-aio:latest
+    ports:
+      - "8090:8090"
+    environment:
+      JAVA_OPTS: "${JAVA_OPTS:--Xms256m -Xmx2g}"
+      MANAGEMENT_HEALTH_JMS_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s

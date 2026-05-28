@@ -1,0 +1,15 @@
+{
+  "transformOptions": {
+    "convert2mdOptions": [
+      { "value": { "name": "language" } },
+      { "value": { "name": "image" } }
+    ]
+  },
+  "transformers": [{
+    "transformerName": "convert2md",
+    "supportedSourceAndTargetList": [
+      {"sourceMediaType": "application/pdf", "targetMediaType": "text/markdown", "maxSourceSizeBytes": 52428800}
+    ],
+    "transformOptions": ["convert2mdOptions"]
+  }]
+}

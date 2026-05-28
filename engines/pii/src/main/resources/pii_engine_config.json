@@ -1,0 +1,33 @@
+{
+  "transformOptions": {
+    "piiOptions": [
+      { "value": { "name": "entities" } },
+      { "value": { "name": "scoreThreshold" } },
+      { "value": { "name": "label" } }
+    ]
+  },
+  "transformers": [
+    {
+      "transformerName": "pdf-pii-redaction",
+      "supportedSourceAndTargetList": [
+        {
+          "sourceMediaType": "application/pdf",
+          "targetMediaType": "application/pdf",
+          "maxSourceSizeBytes": 52428800
+        }
+      ],
+      "transformOptions": ["piiOptions"]
+    },
+    {
+      "transformerName": "pdf-pii-metadata",
+      "supportedSourceAndTargetList": [
+        {
+          "sourceMediaType": "application/pdf",
+          "targetMediaType": "alfresco-metadata-extract",
+          "maxSourceSizeBytes": 52428800
+        }
+      ],
+      "transformOptions": ["piiOptions"]
+    }
+  ]
+}

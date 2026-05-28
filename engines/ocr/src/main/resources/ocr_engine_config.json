@@ -1,0 +1,20 @@
+{
+  "transformOptions": {
+    "ocrOptions": [
+      { "value": { "name": "language" } }
+    ]
+  },
+  "transformers": [
+    {
+      "transformerName": "ocr",
+      "supportedSourceAndTargetList": [
+        {
+          "sourceMediaType": "application/pdf",
+          "targetMediaType": "application/pdf",
+          "maxSourceSizeBytes": 52428800
+        }
+      ],
+      "transformOptions": ["ocrOptions"]
+    }
+  ]
+}

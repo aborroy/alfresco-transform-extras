@@ -1,0 +1,7 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Sample Email
+Date: Thu, 01 Jan 2026 12:00:00 +0000
+Content-Type: text/plain
+
+This is a sample email body for transform testing.

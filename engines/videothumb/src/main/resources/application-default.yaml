@@ -1,0 +1,16 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+management:
+  health:
+    jms:
+      enabled: ${MANAGEMENT_HEALTH_JMS_ENABLED:false}
+queue:
+  engineRequestQueue: videothumb-engine-queue
+transform:
+  core:
+    version: 5.4.1
+  ffmpeg:
+    timeOffset: 1

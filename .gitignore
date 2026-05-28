@@ -1,0 +1,35 @@
+target/
+*.class
+*.jar
+!src/**/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+.project
+.classpath
+.settings/
+
+# Claude Code
+CLAUDE.md
+
+# Binary probe sample files (regenerate with: make generate-samples)
+**/src/main/resources/sample.pdf
+**/src/main/resources/sample.xlsx
+**/src/main/resources/sample.mp3
+**/src/main/resources/sample.mp4
+**/src/main/resources/sample.heic
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd

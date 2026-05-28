@@ -1,0 +1,9 @@
+{
+  "transformers": [{
+    "transformerName": "msg",
+    "supportedSourceAndTargetList": [
+      {"sourceMediaType": "message/rfc822", "targetMediaType": "application/pdf", "maxSourceSizeBytes": 52428800},
+      {"sourceMediaType": "application/vnd.ms-outlook", "targetMediaType": "application/pdf", "maxSourceSizeBytes": 52428800}
+    ]
+  }]
+}

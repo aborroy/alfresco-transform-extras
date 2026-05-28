@@ -1,0 +1,13 @@
+{
+  "transformers": [
+    {
+      "transformerName": "excelextract",
+      "supportedSourceAndTargetList": [
+        {"sourceMediaType": "application/vnd.ms-excel",                                        "targetMediaType": "alfresco-metadata-extract"},
+        {"sourceMediaType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","targetMediaType": "alfresco-metadata-extract"},
+        {"sourceMediaType": "application/vnd.ms-excel.sheet.macroenabled.12",                  "targetMediaType": "alfresco-metadata-extract"},
+        {"sourceMediaType": "application/vnd.ms-excel.sheet.binary.macroenabled.12",           "targetMediaType": "alfresco-metadata-extract"}
+      ]
+    }
+  ]
+}

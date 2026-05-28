@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.alfresco.transform.extras</groupId>
+  <artifactId>alfresco-transform-extras</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <name>alfresco-transform-extras</name>
+  <description>All-In-One container with additional Alfresco Transform Engines</description>
+
+  <parent>
+    <groupId>org.alfresco</groupId>
+    <artifactId>alfresco-transform-core</artifactId>
+    <version>5.4.1</version>
+  </parent>
+
+  <modules>
+    <module>engines/convert2md</module>
+    <module>engines/md2doc</module>
+    <module>engines/ocr</module>
+    <module>engines/pii</module>
+    <module>engines/xml</module>
+    <module>engines/excel</module>
+    <module>engines/markdown</module>
+    <module>engines/html2md</module>
+    <module>engines/whisper</module>
+    <module>engines/msg</module>
+    <module>engines/pdf2docx</module>
+    <module>engines/md2html</module>
+    <module>engines/videothumb</module>
+    <module>engines/heic</module>
+    <!-- AIO assembly must be last — depends on all engine modules above -->
+    <module>engines/aio</module>
+  </modules>
+
+  <properties>
+    <java.version>17</java.version>
+    <alfresco.transformer.version>5.4.1</alfresco.transformer.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <poi.version>5.5.1</poi.version>
+    <!-- Override Spring Boot 4's JUnit 6 BOM: Surefire 3.x requires JUnit 5 Platform. -->
+    <junit-jupiter.version>5.13.1</junit-jupiter.version>
+    <!-- Skip integration tests by default; override with -Dsurefire.excludedGroups= -->
+    <surefire.excludedGroups>integration</surefire.excludedGroups>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.alfresco</groupId>
+        <artifactId>alfresco-base-t-engine</artifactId>
+        <version>${alfresco.transformer.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-ooxml</artifactId>
+        <version>${poi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-scratchpad</artifactId>
+        <version>${poi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.mail</groupId>
+        <artifactId>jakarta.mail-api</artifactId>
+        <version>2.1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.angus</groupId>
+        <artifactId>angus-mail</artifactId>
+        <version>2.0.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>1.21.3</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>1.21.3</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <configuration>
+            <mainClass>org.alfresco.transform.base.Application</mainClass>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>repackage</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <source>${java.version}</source>
+            <target>${java.version}</target>
+            <release>${java.version}</release>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <!-- Integration tests (@Tag("integration")) are excluded by default via the
+               surefire.excludedGroups system property so they can be cleanly overridden.
+               Default build: mvn package   (skips integration tests)
+               Integration run: mvn test -Dgroups=integration -Dsurefire.excludedGroups=
+               Or via Makefile: make integration-test ENGINE=xml -->
+          <configuration>
+            <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+            <includes>
+              <include>**/*Test.java</include>
+              <include>**/Test*.java</include>
+              <include>**/*Tests.java</include>
+              <include>**/*IT.java</include>
+            </includes>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>alfresco-public</id>
+      <name>Alfresco Public</name>
+      <url>https://artifacts.alfresco.com/nexus/content/groups/public</url>
+    </repository>
+  </repositories>
+
+</project>
