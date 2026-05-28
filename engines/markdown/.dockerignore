@@ -1,5 +1,6 @@
 # Build output
 target/
+!target/*-exec.jar
 
 # Version control & IDE
 .git/

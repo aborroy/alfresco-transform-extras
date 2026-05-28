@@ -5,14 +5,14 @@
 #   TESSERACT_LANGUAGES — comma-separated language codes (default: eng)
 #   WHISPER_VERSION    — openai-whisper PyPI version     (default: 20250625)
 #   PDF2DOCX_VERSION   — pdf2docx PyPI version           (default: 0.5.13)
-#   JAVA_BASE          — base JRE image                  (default: eclipse-temurin:17-jre)
+#   JAVA_BASE          — base JRE image                  (default: eclipse-temurin:21-jre)
 
 ARG PANDOC_VERSION=3.9.0.2
 ARG OCRMYPDF_VERSION=17.5.0
 ARG TESSERACT_LANGUAGES=eng
 ARG WHISPER_VERSION=20250625
 ARG PDF2DOCX_VERSION=0.5.13
-ARG JAVA_BASE=eclipse-temurin:17-jre
+ARG JAVA_BASE=eclipse-temurin:21-jre
 
 # ── Stage 1: Maven build ──────────────────────────────────────────────────────
 FROM maven:3.9-eclipse-temurin-17 AS build

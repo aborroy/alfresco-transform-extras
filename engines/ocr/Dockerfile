@@ -2,7 +2,7 @@ FROM python:3.11-slim AS python-deps
 ARG OCRMYPDF_VERSION=17.5.0
 RUN pip install --no-cache-dir "ocrmypdf==${OCRMYPDF_VERSION}"
 
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:21-jre AS runtime
 ARG TESSERACT_LANGUAGES=eng
 COPY --from=python-deps /usr/local /usr/local
 RUN apt-get update \

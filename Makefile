@@ -4,7 +4,7 @@ PLATFORMS ?= linux/amd64,linux/arm64
 BUILDER   ?= builder
 
 # AIO image
-AIO_IMAGE := $(REGISTRY)/alf-tengine-aio:$(VERSION)
+AIO_IMAGE := $(REGISTRY)/alfresco-transform-extras-aio:$(VERSION)
 
 # Tool version ARGs (override on the command line, e.g. make build PANDOC_VERSION=3.5)
 PANDOC_VERSION       ?= 3.9.0.2

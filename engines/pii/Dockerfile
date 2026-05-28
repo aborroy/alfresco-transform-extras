@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir \
     "pymupdf==1.27.2.3"
 RUN python -m spacy download en_core_web_lg
 
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:21-jre AS runtime
 COPY --from=python-deps /usr/local /usr/local
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*

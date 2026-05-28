@@ -1,7 +1,7 @@
 FROM python:3.11-slim AS python-deps
 RUN pip install --no-cache-dir "docling==2.96.0"
 
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:21-jre AS runtime
 COPY --from=python-deps /usr/local /usr/local
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 libgl1 libmagic1 poppler-utils \

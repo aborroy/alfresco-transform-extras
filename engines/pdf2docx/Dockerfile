@@ -2,7 +2,7 @@ FROM python:3.11-slim AS python-deps
 ARG PDF2DOCX_VERSION=0.5.13
 RUN pip install --no-cache-dir "pdf2docx==${PDF2DOCX_VERSION}"
 
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:21-jre AS runtime
 COPY --from=python-deps /usr/local /usr/local
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*

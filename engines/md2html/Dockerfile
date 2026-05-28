@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:21-jre AS runtime
 ARG PANDOC_VERSION=3.9.0.2
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN ARCH=$(dpkg --print-architecture) && \

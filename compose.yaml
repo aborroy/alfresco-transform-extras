@@ -8,7 +8,7 @@ services:
         TESSERACT_LANGUAGES: "${TESSERACT_LANGUAGES:-eng}"
         WHISPER_VERSION: "${WHISPER_VERSION:-20250625}"
         PDF2DOCX_VERSION: "${PDF2DOCX_VERSION:-0.5.13}"
-    image: angelborroy/alf-tengine-aio:latest
+    image: angelborroy/alfresco-transform-extras-aio:latest
     ports:
       - "8090:8090"
     environment:
