@@ -7,7 +7,8 @@ RUN pip install --no-cache-dir \
     "presidio-analyzer==2.2.362" \
     "presidio-anonymizer==2.2.362" \
     "spacy==3.8.14" \
-    "pymupdf==1.27.2.3"
+    "pymupdf==1.27.2.3" \
+    "click"
 RUN python -m spacy download en_core_web_lg
 
 FROM eclipse-temurin:21-jre AS runtime
