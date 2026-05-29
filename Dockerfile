@@ -100,6 +100,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
 
 # Python environment from stage 2
 COPY --from=python-deps /usr/local/lib/python3.11 /usr/local/lib/python3.11
+COPY --from=python-deps /usr/local/lib/libpython3.11.so.1.0 /usr/local/lib/libpython3.11.so.1.0
 COPY --from=python-deps /usr/local/bin/whisper /usr/local/bin/whisper
 COPY --from=python-deps /usr/local/bin/ocrmypdf /usr/local/bin/ocrmypdf
 COPY --from=python-deps /usr/local/bin/python3.11 /usr/local/bin/python3.11
