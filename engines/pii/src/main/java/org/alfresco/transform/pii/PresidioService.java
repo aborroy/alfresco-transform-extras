@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -93,23 +92,15 @@ public class PresidioService {
      */
     public Map<String, String> parseAnalyzeResult(String jsonOutput) {
         try {
-            List<Map<String, Object>> results = objectMapper.readValue(
+            Map<String, Object> result = objectMapper.readValue(
                     jsonOutput, new TypeReference<>() {});
 
-            List<String> entityTypes = new ArrayList<>();
-            for (Map<String, Object> result : results) {
-                Object entityType = result.get("entity_type");
-                if (entityType != null) {
-                    entityTypes.add(entityType.toString());
-                }
-            }
-
-            String hasPII = entityTypes.isEmpty() ? "false" : "true";
-            String entitiesStr = String.join(",", entityTypes);
+            boolean hasPII = Boolean.TRUE.equals(result.get("hasPII"));
+            String entities = result.getOrDefault("entities", "").toString();
 
             return Map.of(
-                    "pii.hasPII", hasPII,
-                    "pii.entities", entitiesStr
+                    "pii.hasPII", String.valueOf(hasPII),
+                    "pii.entities", entities
             );
         } catch (Exception e) {
             log.warn("Failed to parse Presidio analyze JSON output: {}", e.getMessage());
