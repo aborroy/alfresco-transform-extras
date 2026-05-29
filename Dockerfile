@@ -36,6 +36,7 @@ COPY engines/pii/pom.xml        engines/pii/pom.xml
 COPY engines/videothumb/pom.xml engines/videothumb/pom.xml
 COPY engines/whisper/pom.xml    engines/whisper/pom.xml
 COPY engines/xml/pom.xml        engines/xml/pom.xml
+COPY engines/ai/pom.xml         engines/ai/pom.xml
 
 # Download all dependencies (cached as a separate layer; only re-runs when a pom changes)
 RUN --mount=type=cache,target=/root/.m2 \
