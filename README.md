@@ -47,6 +47,8 @@ make health   # {"status":"UP"}
 make test     # lists all 15 transformer names
 ```
 
+> **Browser test endpoint (`/test`):** disabled by default in `alfresco-transform-core` 5.4.1 and returns `403`. `compose.yaml` enables it for local development by setting `TEST_ENDPOINT_ENABLED=true`. **Do not enable in production** — see the [Hyland 5.2.0 → 5.4.1 upgrade guide](https://connect.hyland.com/t5/alfresco-blog/upgrade-guide-alfresco-transform-core-5-2-0-to-5-4-1/ba-p/498369).
+
 ### Single engine
 
 ```bash
