@@ -312,8 +312,20 @@ import openpyxl; wb=openpyxl.Workbook(); ws=wb.active; \
 ws['A1']='Title'; ws['B1']='Value'; wb.properties.title='Sample'; \
 wb.save('engines/excel/src/main/resources/sample.xlsx')" && \
 	 echo "  ✓ excel/sample.xlsx"
-	@ffmpeg -y -f lavfi -i "sine=frequency=440:duration=1" \
-	   engines/whisper/src/main/resources/sample.mp3 -loglevel error && \
+	@SPEECH="This is a sample audio file used to verify the Whisper transcription engine. The quick brown fox jumps over the lazy dog."; \
+	 if command -v say >/dev/null 2>&1; then \
+	   say -v Samantha -o /tmp/probe_speech.aiff "$$SPEECH" && \
+	   ffmpeg -y -i /tmp/probe_speech.aiff -ac 1 -ar 16000 -b:a 64k \
+	     engines/whisper/src/main/resources/sample.mp3 -loglevel error; \
+	 elif command -v espeak-ng >/dev/null 2>&1; then \
+	   espeak-ng -w /tmp/probe_speech.wav "$$SPEECH" && \
+	   ffmpeg -y -i /tmp/probe_speech.wav -ac 1 -ar 16000 -b:a 64k \
+	     engines/whisper/src/main/resources/sample.mp3 -loglevel error; \
+	 else \
+	   echo "  ! 'say' (macOS) or 'espeak-ng' not found — falling back to a 1s sine tone (whisper probe will start but produce empty transcripts for real requests)"; \
+	   ffmpeg -y -f lavfi -i "sine=frequency=440:duration=1" \
+	     engines/whisper/src/main/resources/sample.mp3 -loglevel error; \
+	 fi && \
 	 echo "  ✓ whisper/sample.mp3"
 	@ffmpeg -y -f lavfi -i "color=black:size=320x240:duration=1:rate=25" \
 	   -f lavfi -i "sine=frequency=440:duration=1" \

@@ -26,7 +26,7 @@ Additional [Alfresco Transform Engines](https://github.com/Alfresco/alfresco-tra
 Binary probe sample files (`.pdf`, `.xlsx`, `.mp3`, `.mp4`, `.heic`) are git-ignored. Regenerate them after a fresh clone with:
 
 ```bash
-make generate-samples   # requires pandoc, ffmpeg, heif-enc, python3+openpyxl
+make generate-samples   # requires pandoc, ffmpeg, heif-enc, python3+openpyxl, and `say` (macOS) or `espeak-ng` for the whisper sample
 ```
 
 ## Quick start
