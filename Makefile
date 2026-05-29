@@ -101,12 +101,12 @@ buildx-full: package
 .PHONY: build-xml build-excel \
         build-md2doc build-markdown build-html2md build-md2html \
         build-ocr build-convert2md build-pdf2docx build-whisper \
-        build-pii build-msg build-videothumb build-heic \
+        build-pii build-msg build-videothumb build-heic build-ai \
         build-engines \
         buildx-xml buildx-excel \
         buildx-md2doc buildx-markdown buildx-html2md buildx-md2html \
         buildx-ocr buildx-convert2md buildx-pdf2docx buildx-whisper \
-        buildx-pii buildx-msg buildx-videothumb buildx-heic \
+        buildx-pii buildx-msg buildx-videothumb buildx-heic buildx-ai \
         buildx-engines buildx-all
 
 # Java-only (no external tool ARGs)
@@ -162,12 +162,15 @@ build-videothumb:
 build-heic:
 	$(call build-engine,heic)
 
-# Build all 14 individual engine images sequentially
+build-ai:
+	$(call build-engine,ai)
+
+# Build all 15 individual engine images sequentially
 build-engines: \
 	build-xml build-excel \
 	build-md2doc build-markdown build-html2md build-md2html build-msg \
 	build-ocr build-convert2md build-pdf2docx build-whisper build-pii \
-	build-videothumb build-heic
+	build-videothumb build-heic build-ai
 
 # ── Multi-platform individual engine images ───────────────────────────────────
 
@@ -224,12 +227,15 @@ buildx-videothumb:
 buildx-heic:
 	$(call buildx-engine,heic)
 
-# Build and push all 14 individual engine images for all platforms
+buildx-ai:
+	$(call buildx-engine,ai)
+
+# Build and push all 15 individual engine images for all platforms
 buildx-engines: \
 	buildx-xml buildx-excel \
 	buildx-md2doc buildx-markdown buildx-html2md buildx-md2html buildx-msg \
 	buildx-ocr buildx-convert2md buildx-pdf2docx buildx-whisper buildx-pii \
-	buildx-videothumb buildx-heic
+	buildx-videothumb buildx-heic buildx-ai
 
 # Build and push everything (AIO + all engines) for all platforms
 buildx-all: buildx buildx-engines
@@ -254,7 +260,7 @@ smoke-test:
 	docker run --rm -e MANAGEMENT_HEALTH_JMS_ENABLED=false alf-tengine-$(ENGINE)-test
 
 smoke-test-all:
-	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic; do \
+	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai; do \
 		echo ""; \
 		echo "=== Smoke test: $$engine ==="; \
 		$(MAKE) smoke-test ENGINE=$$engine || exit 1; \
@@ -369,7 +375,7 @@ push:
 	docker push $(AIO_IMAGE)
 
 push-engines:
-	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic; do \
+	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai; do \
 		echo "Pushing $(REGISTRY)/alf-tengine-$$engine:$(VERSION)"; \
 		docker push $(REGISTRY)/alf-tengine-$$engine:$(VERSION); \
 	done
@@ -385,7 +391,7 @@ clean:
 	docker rmi $(AIO_IMAGE) 2>/dev/null || true
 
 clean-engines:
-	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic; do \
+	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai; do \
 		docker rmi $(REGISTRY)/alf-tengine-$$engine:$(VERSION) 2>/dev/null || true; \
 	done
 

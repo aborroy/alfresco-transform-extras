@@ -1,0 +1,17 @@
+{
+  "transformOptions": {
+    "aiOptions": [
+      { "value": { "name": "aiFields", "required": false } }
+    ]
+  },
+  "transformers": [
+    {
+      "transformerName": "ai-metadata",
+      "supportedSourceAndTargetList": [
+        { "sourceMediaType": "text/plain",    "targetMediaType": "alfresco-metadata-extract", "maxSourceSizeBytes": 10485760 },
+        { "sourceMediaType": "application/pdf", "targetMediaType": "alfresco-metadata-extract", "maxSourceSizeBytes": 52428800 }
+      ],
+      "transformOptions": ["aiOptions"]
+    }
+  ]
+}

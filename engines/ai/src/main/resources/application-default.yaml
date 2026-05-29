@@ -1,0 +1,17 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+management:
+  health:
+    jms:
+      enabled: ${MANAGEMENT_HEALTH_JMS_ENABLED:false}
+queue:
+  engineRequestQueue: ai-engine-queue
+transform:
+  core:
+    version: 5.4.1
+  ai:
+    endpoint: ${TRANSFORM_AI_ENDPOINT:http://model-runner.docker.internal/engines/llama.cpp/v1}
+    model: ${TRANSFORM_AI_MODEL:ai/bartowski/Llama-3.2-3B-Instruct-GGUF}

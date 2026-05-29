@@ -1,0 +1,1 @@
+This is a sample document used for transform engine health checks. The Alfresco AI metadata extraction engine uses a local LLM to analyse document content and generate structured metadata properties such as summaries, tags, titles, and language detection.

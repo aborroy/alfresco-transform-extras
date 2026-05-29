@@ -102,6 +102,11 @@
       <artifactId>alf-tengine-heic</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.alfresco.transform.extras</groupId>
+      <artifactId>alf-tengine-ai</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

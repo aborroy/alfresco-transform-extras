@@ -8,6 +8,8 @@
 #
 # Requirements: docker, curl
 # All engine images must be built first (make build / make build-engines).
+# AI engine: requires Docker Desktop with Model Runner enabled and a pulled model.
+#   Override with: TRANSFORM_AI_MODEL=ai/smollm2 bash smoke-test.sh
 
 set -euo pipefail
 
@@ -90,10 +92,20 @@ run_transform() {
   local ok=false detail=""
   if [ "$http_code" = "200" ]; then
     if [ "$tgt" = "alfresco-metadata-extract" ]; then
-      if python3 -c "import sys,json; json.load(open('$outfile'))" 2>/dev/null; then
+      if python3 -c "
+import sys, json
+d = json.load(open('$outfile'))
+if not d:
+    sys.exit(1)
+" 2>/dev/null; then
         ok=true
       else
-        detail="invalid JSON response: $(head -c 200 "$outfile" 2>/dev/null)"
+        body="$(cat "$outfile" 2>/dev/null)"
+        if [ "$body" = "{}" ] || [ "$body" = "{ }" ]; then
+          detail="empty metadata: no properties extracted"
+        else
+          detail="invalid JSON response: $(head -c 200 "$outfile" 2>/dev/null)"
+        fi
       fi
     elif [ -s "$outfile" ]; then
       ok=true
@@ -186,19 +198,26 @@ declare -a TRANSFORMS=(
   "heic|image/heic|image/png|engines/heic/src/main/resources/sample.heic"
   "heic|image/heif|image/jpeg|engines/heic/src/main/resources/sample.heic"
   "heic|image/heif|image/png|engines/heic/src/main/resources/sample.heic"
+
+  "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt"
+  "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt|aiFields=title"
+  "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt|aiFields=description"
+  "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt|aiFields=tags"
+  "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt|aiFields=language"
 )
 
 run_transforms_for_engine() {
   local engine="$1" port="$2" prefix="$3"
   for entry in "${TRANSFORMS[@]}"; do
-    IFS='|' read -r eng src tgt sample <<< "$entry"
+    IFS='|' read -r -a parts <<< "$entry"
+    local eng="${parts[0]}" src="${parts[1]}" tgt="${parts[2]}" sample="${parts[3]}"
     [ "$eng" = "$engine" ] || continue
     local fullpath="${SCRIPT_DIR}/${sample}"
     if [ ! -f "$fullpath" ]; then
       printf "  %-18s  %-52s  %-52s  SKIP (no sample)\n" "$prefix" "$src" "$tgt"
       continue
     fi
-    run_transform "$prefix" "$port" "$src" "$tgt" "$fullpath"
+    run_transform "$prefix" "$port" "$src" "$tgt" "$fullpath" "${parts[@]:4}"
   done
 }
 
@@ -220,7 +239,7 @@ if $RUN_AIO; then
     exit 1
   fi
 
-  for engine in xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic; do
+  for engine in xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic ai; do
     echo ""
     echo "  --- ${engine} ---"
     run_transforms_for_engine "$engine" "$AIO_PORT" "AIO/${engine}"
@@ -235,7 +254,7 @@ fi
 # ── Individual engines section ────────────────────────────────────────────────
 
 if $RUN_ENGINES; then
-  ENGINES=(xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic)
+  ENGINES=(xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic ai)
 
   for engine in "${ENGINES[@]}"; do
     echo ""
@@ -251,9 +270,17 @@ if $RUN_ENGINES; then
     fi
 
     container="smoke-${engine}"
+    extra_env=()
+    if [ "$engine" = "ai" ]; then
+      extra_env=(
+        -e "TRANSFORM_AI_ENDPOINT=${TRANSFORM_AI_ENDPOINT:-http://model-runner.docker.internal/engines/llama.cpp/v1}"
+        -e "TRANSFORM_AI_MODEL=${TRANSFORM_AI_MODEL:-ai/smollm2}"
+      )
+    fi
     docker run -d --rm \
       -p "${ENGINE_PORT}:8090" \
       -e MANAGEMENT_HEALTH_JMS_ENABLED=false \
+      ${extra_env[@]+"${extra_env[@]}"} \
       --name "$container" \
       "$image" > /dev/null
 

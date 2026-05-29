@@ -20,6 +20,7 @@ Additional [Alfresco Transform Engines](https://github.com/Alfresco/alfresco-tra
 | `heic` | HEIC/HEIF → JPEG, PNG | libheif |
 | `excel` | XLS, XLSX → metadata | Apache POI |
 | `xml` | XML → metadata | Java DOM |
+| `ai` | Text, PDF → AI metadata | Local LLM via [Docker Model Runner](https://www.docker.com/products/model-runner/) |
 
 ## After cloning
 
@@ -31,7 +32,7 @@ make generate-samples   # requires pandoc, ffmpeg, heif-enc, python3+openpyxl, a
 
 ## Quick start
 
-### AIO container (all 14 engines)
+### AIO container (all 15 engines)
 
 ```bash
 git clone https://github.com/angelborroy/alfresco-transform-extras
@@ -44,7 +45,7 @@ The container starts on port **8090**. Verify:
 
 ```bash
 make health   # {"status":"UP"}
-make test     # lists all 15 transformer names
+make test     # lists all 19 transformer names (15 engines, some with multiple transformers)
 ```
 
 > **Browser test page (`/`):** the form at `http://localhost:8090/` (which POSTs to `/test`) is disabled by default in `alfresco-transform-core` 5.4.1 and returns `403`. `compose.yaml` enables it for local development by setting `TEST_ENDPOINT_ENABLED=true`. **Do not enable in production** — see the [Hyland 5.2.0 → 5.4.1 upgrade guide](https://connect.hyland.com/t5/alfresco-blog/upgrade-guide-alfresco-transform-core-5-2-0-to-5-4-1/ba-p/498369).
@@ -60,7 +61,7 @@ make run-engine ENGINE=xml PORT=8090
 
 ACS Community communicates with T-Engines over **direct HTTP** using `localTransform.*` properties. No ActiveMQ or Shared File Store is required.
 
-### AIO (all 14 engines in one container)
+### AIO (all 15 engines in one container)
 
 Add to `alfresco-global.properties` (or as `-D` flags in `JAVA_OPTS`):
 
@@ -154,6 +155,70 @@ transform-router:
 | `videothumb` | `videothumb-engine-queue` |
 | `whisper` | `whisper-engine-queue` |
 | `xml` | `xml-engine-queue` |
+| `ai` | `ai-engine-queue` |
+
+## AI Engine
+
+The `ai` engine uses a **local LLM** via [Docker Model Runner](https://www.docker.com/products/model-runner/) to extract metadata from documents. A single transformer (`ai-metadata`) accepts an optional `aiFields` parameter (comma-separated) to select which properties to extract. When `aiFields` is omitted, all four are extracted.
+
+| `aiFields` value | Metadata property | Description |
+|-----------------|-------------------|-------------|
+| `title` | `cm:title` | Short generated document title |
+| `description` | `cm:description` | Concise paragraph summary of document content |
+| `tags` | `cm:taggable` | Comma-separated list of 5-10 topic keywords |
+| `language` | `cm:locale` | ISO 639-1 two-letter language code (e.g. `en`, `es`) |
+
+**Supported input formats:** `text/plain`, `application/pdf`
+
+### Requirements
+
+**Docker Model Runner** must be running locally. In Docker Desktop ≥ 4.40 it ships built-in; enable it in **Settings → Features in development → Docker Model Runner**.
+
+Pull the default model once:
+
+```bash
+docker model pull ai/bartowski/Llama-3.2-3B-Instruct-GGUF
+```
+
+### Configuration
+
+The AI engine connects to Docker Model Runner via environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TRANSFORM_AI_ENDPOINT` | `http://model-runner.docker.internal/engines/llama.cpp/v1` | OpenAI-compatible API endpoint |
+| `TRANSFORM_AI_MODEL` | `ai/bartowski/Llama-3.2-3B-Instruct-GGUF` | Model identifier |
+
+Override in `compose.yaml` or Kubernetes manifests:
+
+```yaml
+transform-ai:
+  image: angelborroy/alf-tengine-ai:latest
+  environment:
+    TRANSFORM_AI_ENDPOINT: "http://model-runner.docker.internal/engines/llama.cpp/v1"
+    TRANSFORM_AI_MODEL: "ai/bartowski/Llama-3.2-3B-Instruct-GGUF"
+```
+
+For Docker containers to reach Docker Model Runner, add the host gateway:
+
+```bash
+docker run --add-host=model-runner.docker.internal:host-gateway angelborroy/alf-tengine-ai:latest
+```
+
+In `compose.yaml`:
+
+```yaml
+transform-ai:
+  extra_hosts:
+    - "model-runner.docker.internal:host-gateway"
+```
+
+### Performance notes
+
+- First request takes 10-15s (model warm-up); subsequent requests ~2-5s
+- Memory: 4GB minimum for Llama-3.2-3B (scales with model size)
+- Text is truncated to 4000 characters before being sent to the LLM
+- The AI engine works alongside the official AIO — no conflicts
 
 ## Transform options
 
@@ -231,13 +296,13 @@ make build-ocr OCRMYPDF_VERSION=16 TESSERACT_LANGUAGES=eng,deu
 # Single-platform (loads into local daemon)
 make build                  Maven + AIO Docker image
 make build-<name>           Individual engine (e.g. make build-ocr)
-make build-engines          All 14 individual images
+make build-engines          All 15 individual images
 
 # Multi-platform linux/amd64 + linux/arm64 — pushes to registry with SBOM + provenance
 make buildx                 AIO image
 make buildx-<name>          Individual engine (e.g. make buildx-ocr)
-make buildx-engines         All 14 individual images
-make buildx-all             AIO + all 14 engines
+make buildx-engines         All 15 individual images
+make buildx-all             AIO + all 15 engines
 
 # Run
 make run                    docker compose up (AIO)
