@@ -1,10 +1,24 @@
 FROM python:3.11-slim AS python-deps
-RUN pip install --no-cache-dir "docling==2.96.0"
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libxcb1 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir "docling==2.96.0" "onnxruntime==1.20.1"
+
+# Pre-fetch docling/HuggingFace models and RapidOCR weights so the non-root
+# runtime user doesn't try to download them on first request.
+ENV HF_HOME=/usr/local/share/huggingface
+COPY src/main/resources/sample.pdf /tmp/prefetch-sample.pdf
+RUN mkdir -p "$HF_HOME" \
+    && python -c "from rapidocr import RapidOCR; RapidOCR()" \
+    && python -c "from docling.document_converter import DocumentConverter; DocumentConverter().convert('/tmp/prefetch-sample.pdf').document.export_to_markdown()" \
+    && rm -f /tmp/prefetch-sample.pdf
 
 FROM eclipse-temurin:21-jre AS runtime
 COPY --from=python-deps /usr/local /usr/local
+COPY --from=python-deps /usr/local/share/huggingface /usr/local/share/huggingface
+RUN chmod -R a+rwX /usr/local/share/huggingface
+ENV HF_HOME=/usr/local/share/huggingface
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 libgl1 libmagic1 poppler-utils \
+    libgl1 libglib2.0-0 libmagic1 poppler-utils \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
 WORKDIR /app

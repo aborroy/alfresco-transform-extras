@@ -19,6 +19,7 @@ PDF2DOCX_VERSION     ?= 0.5.13
 # Usage: $(call build-engine,<name>[,extra --build-arg flags])
 define build-engine
 	docker build $(2) \
+		--target runtime \
 		-t $(REGISTRY)/alf-tengine-$(1):$(VERSION) \
 		engines/$(1)/
 endef
@@ -28,6 +29,7 @@ endef
 define buildx-engine
 	docker buildx build $(2) \
 		--builder $(BUILDER) \
+		--target runtime \
 		--platform $(PLATFORMS) \
 		--sbom=true \
 		--provenance=mode=max \
@@ -148,6 +150,7 @@ build-whisper:
 # pii needs project-root context (copies docker/presidio/)
 build-pii:
 	docker build \
+		--target runtime \
 		-f engines/pii/Dockerfile \
 		-t $(REGISTRY)/alf-tengine-pii:$(VERSION) \
 		.
@@ -327,8 +330,8 @@ wb.save('engines/excel/src/main/resources/sample.xlsx')" && \
 	     engines/whisper/src/main/resources/sample.mp3 -loglevel error; \
 	 fi && \
 	 echo "  ✓ whisper/sample.mp3"
-	@ffmpeg -y -f lavfi -i "color=black:size=320x240:duration=1:rate=25" \
-	   -f lavfi -i "sine=frequency=440:duration=1" \
+	@ffmpeg -y -f lavfi -i "color=black:size=320x240:duration=5:rate=25" \
+	   -f lavfi -i "sine=frequency=440:duration=5" \
 	   -c:v libx264 -c:a aac -shortest \
 	   engines/videothumb/src/main/resources/sample.mp4 -loglevel error && \
 	 echo "  ✓ videothumb/sample.mp4"
@@ -336,6 +339,26 @@ wb.save('engines/excel/src/main/resources/sample.xlsx')" && \
 	 heif-enc /tmp/probe_white.jpg \
 	   -o engines/heic/src/main/resources/sample.heic && \
 	 echo "  ✓ heic/sample.heic"
+	@$(eval M2 := $(shell mvn help:evaluate -q -DforceStdout -Dexpression=settings.localRepository 2>/dev/null || echo $$HOME/.m2/repository)) \
+	 POI_VERSION=5.5.1 && \
+	 CP="$$M2/org/apache/poi/poi/$$POI_VERSION/poi-$$POI_VERSION.jar:$$M2/org/apache/poi/poi-scratchpad/$$POI_VERSION/poi-scratchpad-$$POI_VERSION.jar:$$M2/org/apache/commons/commons-collections4/4.2/commons-collections4-4.2.jar:$$M2/commons-codec/commons-codec/1.9/commons-codec-1.9.jar:$$M2/org/apache/logging/log4j/log4j-api/2.25.4/log4j-api-2.25.4.jar:$$M2/org/apache/logging/log4j/log4j-core/2.25.3/log4j-core-2.25.3.jar:$$M2/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:$$M2/commons-io/commons-io/2.21.0/commons-io-2.21.0.jar" && \
+	 cat > /tmp/GenMsg.java << 'JAVA_EOF' \
+import org.apache.poi.poifs.filesystem.POIFSFileSystem; \
+import java.io.*; import java.nio.charset.StandardCharsets; \
+public class GenMsg { public static void main(String[] a) throws Exception { \
+  try (POIFSFileSystem fs = new POIFSFileSystem()) { \
+    fs.createDocument(new ByteArrayInputStream("Sample Email".getBytes(StandardCharsets.UTF_8)), "__substg1.0_0037001E"); \
+    fs.createDocument(new ByteArrayInputStream("sender@example.com".getBytes(StandardCharsets.UTF_8)), "__substg1.0_0C1F001E"); \
+    fs.createDocument(new ByteArrayInputStream("recipient@example.com".getBytes(StandardCharsets.UTF_8)), "__substg1.0_0E04001E"); \
+    fs.createDocument(new ByteArrayInputStream("This is the body of the sample email.".getBytes(StandardCharsets.UTF_8)), "__substg1.0_1000001E"); \
+    try (FileOutputStream fos = new FileOutputStream(a[0])) { fs.writeFilesystem(fos); } \
+  } \
+} } \
+JAVA_EOF \
+	 && javac -proc:none -cp "$$CP" /tmp/GenMsg.java -d /tmp 2>/dev/null \
+	 && java -cp "/tmp:$$CP" -Dlog4j2.disable.jmx=true GenMsg \
+	      engines/msg/src/main/resources/sample.msg 2>/dev/null \
+	 && echo "  ✓ msg/sample.msg"
 	@echo "Done. All binary sample files regenerated."
 
 # ── Push ──────────────────────────────────────────────────────────────────────

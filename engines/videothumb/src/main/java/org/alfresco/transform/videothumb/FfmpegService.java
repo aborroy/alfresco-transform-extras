@@ -43,10 +43,12 @@ public class FfmpegService {
 
         log.debug("Running ffmpeg on {} at offset {}", inputFile, hhmmss);
 
+        // Place -ss before -i for fast seek; fall back to frame 0 via -ss 00:00:00
+        // so short clips (< offsetSeconds) still produce a thumbnail.
         ProcessBuilder pb = new ProcessBuilder(
                 "ffmpeg",
-                "-i", inputFile.getAbsolutePath(),
                 "-ss", hhmmss,
+                "-i", inputFile.getAbsolutePath(),
                 "-vframes", "1",
                 "-f", "image2",
                 outputFile.getAbsolutePath()

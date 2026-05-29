@@ -102,7 +102,10 @@ RUN apt-get update \
         curl \
         tesseract-ocr \
         libheif-examples \
+        libheif-plugin-libde265 \
+        libheif-plugin-ffmpegdec \
         ffmpeg \
+        ghostscript \
         poppler-utils \
         libgl1 \
         libmagic1 \

@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service that invokes the {@code ocrmypdf} CLI to produce a searchable PDF.
@@ -23,6 +24,20 @@ public class OcrService {
     @Value("${transform.ocr.language:eng}")
     private String defaultLanguage;
 
+    private static final Map<String, String> ISO1_TO_ISO3 = Map.ofEntries(
+        Map.entry("en", "eng"), Map.entry("de", "deu"), Map.entry("fr", "fra"),
+        Map.entry("es", "spa"), Map.entry("it", "ita"), Map.entry("pt", "por"),
+        Map.entry("nl", "nld"), Map.entry("pl", "pol"), Map.entry("ru", "rus"),
+        Map.entry("zh", "chi"), Map.entry("ja", "jpn"), Map.entry("ko", "kor"),
+        Map.entry("ar", "ara"), Map.entry("hi", "hin"), Map.entry("tr", "tur")
+    );
+
+    private String normaliseLang(String lang) {
+        if (lang == null || lang.isBlank()) return defaultLanguage;
+        String trimmed = lang.trim();
+        return ISO1_TO_ISO3.getOrDefault(trimmed.toLowerCase(), trimmed);
+    }
+
     /**
      * Run ocrmypdf on the given input PDF and return the output PDF file.
      *
@@ -32,7 +47,7 @@ public class OcrService {
      * @throws Exception if the process fails or exits with a non-zero code
      */
     public File ocr(File inputFile, String language) throws Exception {
-        String lang = (language != null && !language.isBlank()) ? language.trim() : defaultLanguage;
+        String lang = normaliseLang(language);
 
         Path outputPath = inputFile.toPath().getParent().resolve("ocr-output.pdf");
         File outputFile = outputPath.toFile();

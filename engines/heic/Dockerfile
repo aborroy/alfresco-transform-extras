@@ -1,5 +1,8 @@
 FROM eclipse-temurin:21-jre AS runtime
-RUN apt-get update && apt-get install -y --no-install-recommends libheif-examples \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libheif-examples \
+        libheif-plugin-libde265 \
+        libheif-plugin-ffmpegdec \
     && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
 WORKDIR /app

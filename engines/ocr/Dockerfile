@@ -6,7 +6,7 @@ FROM eclipse-temurin:21-jre AS runtime
 ARG TESSERACT_LANGUAGES=eng
 COPY --from=python-deps /usr/local /usr/local
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends tesseract-ocr \
+    && apt-get install -y --no-install-recommends tesseract-ocr ghostscript \
     && for lang in $(echo "${TESSERACT_LANGUAGES}" | tr ',' ' '); do \
          [ "$lang" != "eng" ] && apt-get install -y --no-install-recommends "tesseract-ocr-${lang}" || true; \
        done \
