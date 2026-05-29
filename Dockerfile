@@ -52,6 +52,13 @@ ARG OCRMYPDF_VERSION
 ARG WHISPER_VERSION
 ARG PDF2DOCX_VERSION
 
+# libgl1/libxcb1/libglib2.0-0 are required by opencv (a transitive dep of
+# rapidocr) so that "import cv2" works when we pre-fetch models below.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libxcb1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install \
     "ocrmypdf==${OCRMYPDF_VERSION}" \
@@ -61,16 +68,35 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     "presidio-anonymizer==2.2.362" \
     "spacy==3.8.14" \
     "pymupdf==1.27.2.3" \
-    "docling==2.96.0"
+    "docling==2.96.0" \
+    "onnxruntime==1.20.1"
 
 RUN python -m spacy download en_core_web_lg
+
+# Pre-fetch docling/RapidOCR models so the runtime (non-root, read-only
+# site-packages) doesn't try to download them on first request. RapidOCR's
+# default config points to *_mobile.onnx weights that aren't bundled, and
+# it writes them under .../site-packages/rapidocr/models/ — populate that
+# dir now while we have root. Docling's layout/table/figure-classifier
+# models come from HuggingFace Hub and are loaded lazily on the first
+# convert() call, so we run a real conversion against a tiny sample PDF
+# to force every model snapshot to be cached under HF_HOME.
+ENV HF_HOME=/usr/local/share/huggingface
+COPY engines/convert2md/src/main/resources/sample.pdf /tmp/prefetch-sample.pdf
+RUN mkdir -p "$HF_HOME" \
+    && python -c "from rapidocr import RapidOCR; RapidOCR()" \
+    && python -c "from docling.document_converter import DocumentConverter; DocumentConverter().convert('/tmp/prefetch-sample.pdf').document.export_to_markdown()" \
+    && rm -f /tmp/prefetch-sample.pdf
 
 # ── Stage 3: Runtime AIO ──────────────────────────────────────────────────────
 FROM ${JAVA_BASE}
 ARG PANDOC_VERSION
 ARG TESSERACT_LANGUAGES
 
-# System packages + optional Tesseract language packs in a single RUN layer
+# System packages + optional Tesseract language packs in a single RUN layer.
+# We do NOT install apt's python3 here: the next stage copies a Python 3.11
+# tree from python:3.11-slim, and apt's python3 (currently 3.14 on the
+# eclipse-temurin base) is ABI-incompatible with those site-packages.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
@@ -80,8 +106,6 @@ RUN apt-get update \
         poppler-utils \
         libgl1 \
         libmagic1 \
-        python3 \
-        python3-pip \
         texlive-latex-base \
         texlive-xetex \
         texlive-fonts-recommended \
@@ -98,12 +122,22 @@ RUN ARCH=$(dpkg --print-architecture) && \
     curl -fsSL "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-linux-${PANDOC_ARCH}.tar.gz" \
     | tar -xz --strip-components=2 -C /usr/local/bin "pandoc-${PANDOC_VERSION}/bin/pandoc"
 
-# Python environment from stage 2
+# Python environment from stage 2 — the engine code calls "python3" via PATH,
+# so we symlink it to the 3.11 binary that matches the site-packages we copy.
 COPY --from=python-deps /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=python-deps /usr/local/lib/libpython3.11.so.1.0 /usr/local/lib/libpython3.11.so.1.0
 COPY --from=python-deps /usr/local/bin/whisper /usr/local/bin/whisper
 COPY --from=python-deps /usr/local/bin/ocrmypdf /usr/local/bin/ocrmypdf
 COPY --from=python-deps /usr/local/bin/python3.11 /usr/local/bin/python3.11
+RUN ln -sf /usr/local/bin/python3.11 /usr/local/bin/python3 \
+    && ln -sf /usr/local/bin/python3.11 /usr/local/bin/python
+
+# Pre-fetched docling/HuggingFace model cache from stage 2. Chmod so the
+# non-root alfte user can write HF's lock/refs files (HF still touches
+# these even when the snapshot already exists locally).
+COPY --from=python-deps /usr/local/share/huggingface /usr/local/share/huggingface
+RUN chmod -R a+rwX /usr/local/share/huggingface
+ENV HF_HOME=/usr/local/share/huggingface
 
 # AIO fat JAR (produced by engines/aio module, named alf-tengine-aio.jar)
 COPY --from=build /build/engines/aio/target/alf-tengine-aio.jar /usr/bin/alf-tengine-aio.jar
