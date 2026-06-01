@@ -2,7 +2,7 @@
 # docker/presidio/ directory. The build context for this Dockerfile must be the
 # project root (../../) rather than the engines/pii/ directory, e.g.:
 #   docker build -f engines/pii/Dockerfile .
-FROM python:3.11-slim AS python-deps
+FROM python:3.13-slim AS python-deps
 RUN pip install --no-cache-dir \
     "presidio-analyzer==2.2.362" \
     "presidio-anonymizer==2.2.362" \

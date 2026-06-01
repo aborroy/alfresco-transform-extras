@@ -1,7 +1,7 @@
-FROM python:3.11-slim AS python-deps
+FROM python:3.13-slim AS python-deps
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libxcb1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir "docling==2.96.0" "onnxruntime==1.20.1"
+RUN pip install --no-cache-dir "docling==2.96.1" "onnxruntime==1.26.0"
 
 # Pre-fetch docling/HuggingFace models and RapidOCR weights so the non-root
 # runtime user doesn't try to download them on first request.

@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS python-deps
+FROM python:3.13-slim AS python-deps
 ARG LITEPARSE_VERSION=2.0.4
 RUN pip install --no-cache-dir liteparse==${LITEPARSE_VERSION}
 

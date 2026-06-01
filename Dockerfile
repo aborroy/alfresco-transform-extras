@@ -17,7 +17,7 @@ ARG LITEPARSE_VERSION=2.0.4
 ARG JAVA_BASE=eclipse-temurin:21-jre
 
 # ── Stage 1: Maven build ──────────────────────────────────────────────────────
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
 
 # Copy all pom.xml files first — Docker caches this layer separately from sources.
@@ -51,7 +51,7 @@ RUN --mount=type=cache,target=/root/.m2 \
     mvn clean package -DskipTests --batch-mode
 
 # ── Stage 2: Python dependencies ─────────────────────────────────────────────
-FROM python:3.11-slim AS python-deps
+FROM python:3.13-slim AS python-deps
 ARG OCRMYPDF_VERSION
 ARG WHISPER_VERSION
 ARG PDF2DOCX_VERSION
@@ -73,8 +73,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     "presidio-anonymizer==2.2.362" \
     "spacy==3.8.14" \
     "pymupdf==1.27.2.3" \
-    "docling==2.96.0" \
-    "onnxruntime==1.20.1" \
+    "docling==2.96.1" \
+    "onnxruntime==1.26.0" \
     "liteparse==${LITEPARSE_VERSION}"
 
 RUN python -m spacy download en_core_web_lg
@@ -100,8 +100,8 @@ ARG PANDOC_VERSION
 ARG TESSERACT_LANGUAGES
 
 # System packages + optional Tesseract language packs in a single RUN layer.
-# We do NOT install apt's python3 here: the next stage copies a Python 3.11
-# tree from python:3.11-slim, and apt's python3 (currently 3.14 on the
+# We do NOT install apt's python3 here: the next stage copies a Python 3.13
+# tree from python:3.13-slim, and apt's python3 (currently 3.14 on the
 # eclipse-temurin base) is ABI-incompatible with those site-packages.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

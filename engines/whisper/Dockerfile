@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS python-deps
+FROM python:3.13-slim AS python-deps
 ARG WHISPER_VERSION=20250625
 RUN pip install --no-cache-dir "openai-whisper==${WHISPER_VERSION}"
 

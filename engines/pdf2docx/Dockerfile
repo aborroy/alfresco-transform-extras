@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS python-deps
+FROM python:3.13-slim AS python-deps
 ARG PDF2DOCX_VERSION=0.5.13
 RUN pip install --no-cache-dir "pdf2docx==${PDF2DOCX_VERSION}"
 

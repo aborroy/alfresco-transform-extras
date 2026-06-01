@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS python-deps
+FROM python:3.13-slim AS python-deps
 ARG OCRMYPDF_VERSION=17.5.0
 RUN pip install --no-cache-dir "ocrmypdf==${OCRMYPDF_VERSION}"
 
