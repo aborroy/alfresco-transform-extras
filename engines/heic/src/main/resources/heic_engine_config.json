@@ -3,10 +3,10 @@
     {
       "transformerName": "heic",
       "supportedSourceAndTargetList": [
-        {"sourceMediaType": "image/heic", "targetMediaType": "image/jpeg"},
-        {"sourceMediaType": "image/heic", "targetMediaType": "image/png"},
-        {"sourceMediaType": "image/heif", "targetMediaType": "image/jpeg"},
-        {"sourceMediaType": "image/heif", "targetMediaType": "image/png"}
+        {"sourceMediaType": "image/heic", "targetMediaType": "image/jpeg", "priority": 50},
+        {"sourceMediaType": "image/heic", "targetMediaType": "image/png",  "priority": 50},
+        {"sourceMediaType": "image/heif", "targetMediaType": "image/jpeg", "priority": 50},
+        {"sourceMediaType": "image/heif", "targetMediaType": "image/png",  "priority": 50}
       ]
     }
   ]

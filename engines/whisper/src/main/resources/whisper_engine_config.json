@@ -8,14 +8,15 @@
     {
       "transformerName": "whisper",
       "supportedSourceAndTargetList": [
-        {"sourceMediaType": "audio/mpeg",        "targetMediaType": "text/plain"},
-        {"sourceMediaType": "audio/wav",         "targetMediaType": "text/plain"},
-        {"sourceMediaType": "audio/ogg",         "targetMediaType": "text/plain"},
-        {"sourceMediaType": "audio/flac",        "targetMediaType": "text/plain"},
-        {"sourceMediaType": "video/mp4",         "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000},
-        {"sourceMediaType": "video/quicktime",   "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000},
-        {"sourceMediaType": "video/x-msvideo",  "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000},
-        {"sourceMediaType": "video/x-matroska", "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000}
+        {"sourceMediaType": "audio/mpeg",        "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "audio/wav",         "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "audio/ogg",         "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "audio/flac",        "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "audio/mp4",         "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "video/mp4",         "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "video/quicktime",   "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "video/x-msvideo",  "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50},
+        {"sourceMediaType": "video/x-matroska", "targetMediaType": "text/plain", "maxSourceSizeBytes": 524288000, "priority": 50}
       ],
       "transformOptions": ["whisperOptions"]
     }

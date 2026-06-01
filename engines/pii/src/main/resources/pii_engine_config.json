@@ -13,7 +13,8 @@
         {
           "sourceMediaType": "application/pdf",
           "targetMediaType": "application/pdf",
-          "maxSourceSizeBytes": 52428800
+          "maxSourceSizeBytes": 52428800,
+          "priority": 50
         }
       ],
       "transformOptions": ["piiOptions"]
@@ -24,7 +25,8 @@
         {
           "sourceMediaType": "application/pdf",
           "targetMediaType": "alfresco-metadata-extract",
-          "maxSourceSizeBytes": 52428800
+          "maxSourceSizeBytes": 52428800,
+          "priority": 55
         }
       ],
       "transformOptions": ["piiOptions"]

@@ -6,7 +6,8 @@
         {
           "sourceMediaType": "application/pdf",
           "targetMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "maxSourceSizeBytes": 52428800
+          "maxSourceSizeBytes": 52428800,
+          "priority": 50
         }
       ]
     }

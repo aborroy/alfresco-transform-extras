@@ -5,6 +5,7 @@
 #   TESSERACT_LANGUAGES — comma-separated language codes (default: eng)
 #   WHISPER_VERSION    — openai-whisper PyPI version     (default: 20250625)
 #   PDF2DOCX_VERSION   — pdf2docx PyPI version           (default: 0.5.13)
+#   LITEPARSE_VERSION  — liteparse PyPI version          (default: 2.0.4)
 #   JAVA_BASE          — base JRE image                  (default: eclipse-temurin:21-jre)
 
 ARG PANDOC_VERSION=3.9.0.2
@@ -12,6 +13,7 @@ ARG OCRMYPDF_VERSION=17.5.0
 ARG TESSERACT_LANGUAGES=eng
 ARG WHISPER_VERSION=20250625
 ARG PDF2DOCX_VERSION=0.5.13
+ARG LITEPARSE_VERSION=2.0.4
 ARG JAVA_BASE=eclipse-temurin:21-jre
 
 # ── Stage 1: Maven build ──────────────────────────────────────────────────────
@@ -37,6 +39,7 @@ COPY engines/videothumb/pom.xml engines/videothumb/pom.xml
 COPY engines/whisper/pom.xml    engines/whisper/pom.xml
 COPY engines/xml/pom.xml        engines/xml/pom.xml
 COPY engines/ai/pom.xml         engines/ai/pom.xml
+COPY engines/liteparse/pom.xml  engines/liteparse/pom.xml
 
 # Download all dependencies (cached as a separate layer; only re-runs when a pom changes)
 RUN --mount=type=cache,target=/root/.m2 \
@@ -52,6 +55,7 @@ FROM python:3.11-slim AS python-deps
 ARG OCRMYPDF_VERSION
 ARG WHISPER_VERSION
 ARG PDF2DOCX_VERSION
+ARG LITEPARSE_VERSION
 
 # libgl1/libxcb1/libglib2.0-0 are required by opencv (a transitive dep of
 # rapidocr) so that "import cv2" works when we pre-fetch models below.
@@ -70,7 +74,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     "spacy==3.8.14" \
     "pymupdf==1.27.2.3" \
     "docling==2.96.0" \
-    "onnxruntime==1.20.1"
+    "onnxruntime==1.20.1" \
+    "liteparse==${LITEPARSE_VERSION}"
 
 RUN python -m spacy download en_core_web_lg
 
@@ -114,6 +119,7 @@ RUN apt-get update \
         texlive-xetex \
         texlive-fonts-recommended \
         lmodern \
+        libreoffice-calc libreoffice-writer libreoffice-impress \
     && for lang in $(echo "${TESSERACT_LANGUAGES}" | tr ',' ' '); do \
          [ "$lang" != "eng" ] && apt-get install -y --no-install-recommends "tesseract-ocr-${lang}" || true; \
        done \

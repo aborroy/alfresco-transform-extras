@@ -3,8 +3,8 @@
     {
       "transformerName": "xmlextract",
       "supportedSourceAndTargetList": [
-        {"sourceMediaType": "application/xml", "targetMediaType": "alfresco-metadata-extract"},
-        {"sourceMediaType": "text/xml",         "targetMediaType": "alfresco-metadata-extract"}
+        {"sourceMediaType": "application/xml", "targetMediaType": "alfresco-metadata-extract", "priority": 45},
+        {"sourceMediaType": "text/xml",         "targetMediaType": "alfresco-metadata-extract", "priority": 45}
       ]
     }
   ]

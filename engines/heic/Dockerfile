@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libheif-plugin-libde265 \
         libheif-plugin-ffmpegdec \
     && rm -rf /var/lib/apt/lists/*
-RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
+RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
 COPY target/alf-tengine-heic-1.0.0-exec.jar heic.jar
 USER alfte

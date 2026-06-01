@@ -11,7 +11,7 @@ RUN apt-get update \
          [ "$lang" != "eng" ] && apt-get install -y --no-install-recommends "tesseract-ocr-${lang}" || true; \
        done \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
+RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
 COPY target/alf-tengine-ocr-1.0.0-exec.jar ocr.jar
 USER alfte

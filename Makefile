@@ -12,6 +12,7 @@ OCRMYPDF_VERSION     ?= 17.5.0
 TESSERACT_LANGUAGES  ?= eng
 WHISPER_VERSION      ?= 20250625
 PDF2DOCX_VERSION     ?= 0.5.13
+LITEPARSE_VERSION    ?= 2.0.4
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ build: package
 		--build-arg TESSERACT_LANGUAGES=$(TESSERACT_LANGUAGES) \
 		--build-arg WHISPER_VERSION=$(WHISPER_VERSION) \
 		--build-arg PDF2DOCX_VERSION=$(PDF2DOCX_VERSION) \
+		--build-arg LITEPARSE_VERSION=$(LITEPARSE_VERSION) \
 		-t $(AIO_IMAGE) .
 
 build-full: package
@@ -64,6 +66,7 @@ build-full: package
 		--build-arg TESSERACT_LANGUAGES=eng,spa,fra,deu,ita,por \
 		--build-arg WHISPER_VERSION=$(WHISPER_VERSION) \
 		--build-arg PDF2DOCX_VERSION=$(PDF2DOCX_VERSION) \
+		--build-arg LITEPARSE_VERSION=$(LITEPARSE_VERSION) \
 		-t $(AIO_IMAGE) .
 
 # Multi-platform AIO build — pushes to registry with SBOM + provenance
@@ -79,6 +82,7 @@ buildx: package
 		--build-arg TESSERACT_LANGUAGES=$(TESSERACT_LANGUAGES) \
 		--build-arg WHISPER_VERSION=$(WHISPER_VERSION) \
 		--build-arg PDF2DOCX_VERSION=$(PDF2DOCX_VERSION) \
+		--build-arg LITEPARSE_VERSION=$(LITEPARSE_VERSION) \
 		-t $(AIO_IMAGE) .
 
 buildx-full: package
@@ -94,6 +98,7 @@ buildx-full: package
 		--build-arg TESSERACT_LANGUAGES=eng,spa,fra,deu,ita,por \
 		--build-arg WHISPER_VERSION=$(WHISPER_VERSION) \
 		--build-arg PDF2DOCX_VERSION=$(PDF2DOCX_VERSION) \
+		--build-arg LITEPARSE_VERSION=$(LITEPARSE_VERSION) \
 		-t $(AIO_IMAGE) .
 
 # ── Individual engine images ──────────────────────────────────────────────────
@@ -101,12 +106,12 @@ buildx-full: package
 .PHONY: build-xml build-excel \
         build-md2doc build-markdown build-html2md build-md2html \
         build-ocr build-convert2md build-pdf2docx build-whisper \
-        build-pii build-msg build-videothumb build-heic build-ai \
+        build-pii build-msg build-videothumb build-heic build-ai build-liteparse \
         build-engines \
         buildx-xml buildx-excel \
         buildx-md2doc buildx-markdown buildx-html2md buildx-md2html \
         buildx-ocr buildx-convert2md buildx-pdf2docx buildx-whisper \
-        buildx-pii buildx-msg buildx-videothumb buildx-heic buildx-ai \
+        buildx-pii buildx-msg buildx-videothumb buildx-heic buildx-ai buildx-liteparse \
         buildx-engines buildx-all
 
 # Java-only (no external tool ARGs)
@@ -165,12 +170,15 @@ build-heic:
 build-ai:
 	$(call build-engine,ai)
 
-# Build all 15 individual engine images sequentially
+build-liteparse:
+	$(call build-engine,liteparse,--build-arg LITEPARSE_VERSION=$(LITEPARSE_VERSION))
+
+# Build all 16 individual engine images sequentially
 build-engines: \
 	build-xml build-excel \
 	build-md2doc build-markdown build-html2md build-md2html build-msg \
 	build-ocr build-convert2md build-pdf2docx build-whisper build-pii \
-	build-videothumb build-heic build-ai
+	build-videothumb build-heic build-ai build-liteparse
 
 # ── Multi-platform individual engine images ───────────────────────────────────
 
@@ -230,12 +238,15 @@ buildx-heic:
 buildx-ai:
 	$(call buildx-engine,ai)
 
-# Build and push all 15 individual engine images for all platforms
+buildx-liteparse:
+	$(call buildx-engine,liteparse,--build-arg LITEPARSE_VERSION=$(LITEPARSE_VERSION))
+
+# Build and push all 16 individual engine images for all platforms
 buildx-engines: \
 	buildx-xml buildx-excel \
 	buildx-md2doc buildx-markdown buildx-html2md buildx-md2html buildx-msg \
 	buildx-ocr buildx-convert2md buildx-pdf2docx buildx-whisper buildx-pii \
-	buildx-videothumb buildx-heic buildx-ai
+	buildx-videothumb buildx-heic buildx-ai buildx-liteparse
 
 # Build and push everything (AIO + all engines) for all platforms
 buildx-all: buildx buildx-engines
@@ -260,7 +271,7 @@ smoke-test:
 	docker run --rm -e MANAGEMENT_HEALTH_JMS_ENABLED=false alf-tengine-$(ENGINE)-test
 
 smoke-test-all:
-	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai; do \
+	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai liteparse; do \
 		echo ""; \
 		echo "=== Smoke test: $$engine ==="; \
 		$(MAKE) smoke-test ENGINE=$$engine || exit 1; \
@@ -375,7 +386,7 @@ push:
 	docker push $(AIO_IMAGE)
 
 push-engines:
-	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai; do \
+	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai liteparse; do \
 		echo "Pushing $(REGISTRY)/alf-tengine-$$engine:$(VERSION)"; \
 		docker push $(REGISTRY)/alf-tengine-$$engine:$(VERSION); \
 	done
@@ -391,7 +402,7 @@ clean:
 	docker rmi $(AIO_IMAGE) 2>/dev/null || true
 
 clean-engines:
-	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai; do \
+	@for engine in xml excel md2doc markdown html2md md2html msg ocr convert2md pdf2docx whisper pii videothumb heic ai liteparse; do \
 		docker rmi $(REGISTRY)/alf-tengine-$$engine:$(VERSION) 2>/dev/null || true; \
 	done
 

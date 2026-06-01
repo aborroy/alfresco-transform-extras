@@ -5,11 +5,13 @@
       "supportedSourceAndTargetList": [
         {
           "sourceMediaType": "text/markdown",
-          "targetMediaType": "application/pdf"
+          "targetMediaType": "application/pdf",
+          "priority": 50
         },
         {
           "sourceMediaType": "text/x-markdown",
-          "targetMediaType": "application/pdf"
+          "targetMediaType": "application/pdf",
+          "priority": 50
         }
       ]
     }

@@ -11,19 +11,23 @@
       "supportedSourceAndTargetList": [
         {
           "sourceMediaType": "text/markdown",
-          "targetMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          "targetMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "priority": 50
         },
         {
           "sourceMediaType": "text/markdown",
-          "targetMediaType": "application/pdf"
+          "targetMediaType": "application/pdf",
+          "priority": 50
         },
         {
           "sourceMediaType": "text/x-markdown",
-          "targetMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          "targetMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "priority": 50
         },
         {
           "sourceMediaType": "text/x-markdown",
-          "targetMediaType": "application/pdf"
+          "targetMediaType": "application/pdf",
+          "priority": 50
         }
       ],
       "transformOptions": ["pandocOptions"]

@@ -189,6 +189,7 @@ declare -a TRANSFORMS=(
   "whisper|audio/wav|text/plain|engines/whisper/src/main/resources/sample.mp3"
   "whisper|audio/ogg|text/plain|engines/whisper/src/main/resources/sample.mp3"
   "whisper|audio/flac|text/plain|engines/whisper/src/main/resources/sample.mp3"
+  "whisper|audio/mp4|text/plain|engines/whisper/src/main/resources/sample.mp3"
   "whisper|video/mp4|text/plain|engines/whisper/src/main/resources/sample.mp3"
   "whisper|video/quicktime|text/plain|engines/whisper/src/main/resources/sample.mp3"
   "whisper|video/x-msvideo|text/plain|engines/whisper/src/main/resources/sample.mp3"
@@ -204,6 +205,17 @@ declare -a TRANSFORMS=(
   "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt|aiFields=description"
   "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt|aiFields=tags"
   "ai|text/plain|alfresco-metadata-extract|engines/ai/src/main/resources/probe.txt|aiFields=language"
+
+  "liteparse|application/pdf|text/markdown|engines/liteparse/src/main/resources/sample.pdf"
+  "liteparse|application/pdf|text/plain|engines/liteparse/src/main/resources/sample.pdf"
+  "liteparse|application/vnd.openxmlformats-officedocument.wordprocessingml.document|text/markdown|engines/liteparse/src/main/resources/sample.docx"
+  "liteparse|application/vnd.openxmlformats-officedocument.wordprocessingml.document|text/plain|engines/liteparse/src/main/resources/sample.docx"
+  "liteparse|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|text/markdown|engines/liteparse/src/main/resources/sample.xlsx"
+  "liteparse|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|text/plain|engines/liteparse/src/main/resources/sample.xlsx"
+  "liteparse|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/markdown|engines/liteparse/src/main/resources/sample.pptx"
+  "liteparse|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|engines/liteparse/src/main/resources/sample.pptx"
+  "liteparse|application/msword|text/markdown|engines/liteparse/src/main/resources/sample.doc"
+  "liteparse|application/msword|text/plain|engines/liteparse/src/main/resources/sample.doc"
 )
 
 run_transforms_for_engine() {
@@ -239,7 +251,7 @@ if $RUN_AIO; then
     exit 1
   fi
 
-  for engine in xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic ai; do
+  for engine in xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic ai liteparse; do
     echo ""
     echo "  --- ${engine} ---"
     run_transforms_for_engine "$engine" "$AIO_PORT" "AIO/${engine}"
@@ -254,7 +266,7 @@ fi
 # ── Individual engines section ────────────────────────────────────────────────
 
 if $RUN_ENGINES; then
-  ENGINES=(xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic ai)
+  ENGINES=(xml excel markdown html2md md2html md2doc msg ocr convert2md pdf2docx pii videothumb whisper heic ai liteparse)
 
   for engine in "${ENGINES[@]}"; do
     echo ""

@@ -33,6 +33,7 @@
     <module>engines/videothumb</module>
     <module>engines/heic</module>
     <module>engines/ai</module>
+    <module>engines/liteparse</module>
     <!-- AIO assembly must be last — depends on all engine modules above -->
     <module>engines/aio</module>
   </modules>

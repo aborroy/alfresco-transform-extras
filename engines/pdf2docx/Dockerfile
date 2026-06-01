@@ -6,7 +6,7 @@ FROM eclipse-temurin:21-jre AS runtime
 COPY --from=python-deps /usr/local /usr/local
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
+RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
 COPY target/alf-tengine-pdf2docx-1.0.0-exec.jar pdf2docx.jar
 USER alfte

@@ -16,7 +16,7 @@ COPY --from=python-deps /usr/local /usr/local
 RUN apt-get update && apt-get install -y --no-install-recommends python3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY docker/presidio/ /opt/presidio/
-RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
+RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
 COPY engines/pii/target/alf-tengine-pii-1.0.0-exec.jar pii.jar
 USER alfte

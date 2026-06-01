@@ -21,6 +21,7 @@ Additional [Alfresco Transform Engines](https://github.com/Alfresco/alfresco-tra
 | `excel` | XLS, XLSX → metadata | Apache POI |
 | `xml` | XML → metadata | Java DOM |
 | `ai` | Text, PDF → AI metadata | Local LLM via [Docker Model Runner](https://www.docker.com/products/model-runner/) |
+| `liteparse` | PDF, DOCX, XLSX, PPTX, DOC → Markdown, Text | [LiteParse](https://pypi.org/project/liteparse/) + LibreOffice |
 
 ## After cloning
 
@@ -32,7 +33,7 @@ make generate-samples   # requires pandoc, ffmpeg, heif-enc, python3+openpyxl, a
 
 ## Quick start
 
-### AIO container (all 15 engines)
+### AIO container (all 16 engines)
 
 ```bash
 git clone https://github.com/angelborroy/alfresco-transform-extras
@@ -45,7 +46,7 @@ The container starts on port **8090**. Verify:
 
 ```bash
 make health   # {"status":"UP"}
-make test     # lists all 19 transformer names (15 engines, some with multiple transformers)
+make test     # lists all transformer names (16 engines, some with multiple transformers)
 ```
 
 > **Browser test page (`/`):** the form at `http://localhost:8090/` (which POSTs to `/test`) is disabled by default in `alfresco-transform-core` 5.4.1 and returns `403`. `compose.yaml` enables it for local development by setting `TEST_ENDPOINT_ENABLED=true`. **Do not enable in production** — see the [Hyland 5.2.0 → 5.4.1 upgrade guide](https://connect.hyland.com/t5/alfresco-blog/upgrade-guide-alfresco-transform-core-5-2-0-to-5-4-1/ba-p/498369).
@@ -61,7 +62,7 @@ make run-engine ENGINE=xml PORT=8090
 
 ACS Community communicates with T-Engines over **direct HTTP** using `localTransform.*` properties. No ActiveMQ or Shared File Store is required.
 
-### AIO (all 15 engines in one container)
+### AIO (all 16 engines in one container)
 
 Add to `alfresco-global.properties` (or as `-D` flags in `JAVA_OPTS`):
 
@@ -156,6 +157,7 @@ transform-router:
 | `whisper` | `whisper-engine-queue` |
 | `xml` | `xml-engine-queue` |
 | `ai` | `ai-engine-queue` |
+| `liteparse` | `liteparse-engine-queue` |
 
 ## AI Engine
 
@@ -234,6 +236,8 @@ These options can be passed as request parameters to `/transform` or configured 
 | `md2doc` | `tocDepth` | integer | `3` | Maximum heading depth in the TOC |
 | `whisper` | `model` | string | `base` | Whisper model: `tiny`, `base`, `small`, `medium`, `large` |
 | `videothumb` | `timeOffset` | integer | `1` | Seconds into the video for the thumbnail frame |
+| `convert2md` | `language` | string | `english` | Document language hint for Docling OCR |
+| `convert2md` | `image` | string | `placeholder` | Image handling mode for Docling |
 
 ## Scaling
 
@@ -246,6 +250,7 @@ These options can be passed as request parameters to `/transform` or configured 
 | `convert2md` | 4 GB | Docling loads a PyTorch model |
 | `whisper` (large) | 8 GB | Model size scales with quality |
 | `pii` | 2 GB | spaCy `en_core_web_lg` model |
+| `liteparse` | 1 GB | LibreOffice for Office formats |
 | All others | 512 MB | Java + lightweight external tool |
 
 **Timeout**: OCR on dense PDFs and Whisper transcription of long files can take minutes. Set a generous socket timeout in ACS:
@@ -265,7 +270,7 @@ environment:
 
 ## Security
 
-- All engine containers run as a **non-root user** (`alfte`, UID 33017).
+- All engine containers run as a **non-root user** (`alfte`, UID 33050).
 - Engines have no external network dependencies at runtime — no outbound calls after startup. The `pii` engine loads Presidio models from the image; `convert2md` loads Docling models from the image.
 - **Do not expose port 8090 on the public internet.** Engines are internal services intended to be accessed only by ACS or the Transform Router.
 - For network isolation in production, place engines on a dedicated internal Docker network or use Kubernetes `NetworkPolicy` to restrict ingress to the Transform Router and block all egress.
@@ -282,6 +287,7 @@ External tool versions are controlled via Docker build ARGs with stable defaults
 | `TESSERACT_LANGUAGES` | `eng` | ocr |
 | `WHISPER_VERSION` | `20250625` | whisper |
 | `PDF2DOCX_VERSION` | `0.5.13` | pdf2docx |
+| `LITEPARSE_VERSION` | `2.0.4` | liteparse |
 
 Override at build time:
 
@@ -296,13 +302,13 @@ make build-ocr OCRMYPDF_VERSION=16 TESSERACT_LANGUAGES=eng,deu
 # Single-platform (loads into local daemon)
 make build                  Maven + AIO Docker image
 make build-<name>           Individual engine (e.g. make build-ocr)
-make build-engines          All 15 individual images
+make build-engines          All 16 individual images
 
 # Multi-platform linux/amd64 + linux/arm64 — pushes to registry with SBOM + provenance
 make buildx                 AIO image
 make buildx-<name>          Individual engine (e.g. make buildx-ocr)
-make buildx-engines         All 15 individual images
-make buildx-all             AIO + all 15 engines
+make buildx-engines         All 16 individual images
+make buildx-all             AIO + all 16 engines
 
 # Run
 make run                    docker compose up (AIO)

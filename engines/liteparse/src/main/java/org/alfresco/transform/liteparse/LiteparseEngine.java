@@ -1,4 +1,4 @@
-package org.alfresco.transform.whisper;
+package org.alfresco.transform.liteparse;
 
 import lombok.RequiredArgsConstructor;
 import org.alfresco.transform.base.TransformEngine;
@@ -11,10 +11,10 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class WhisperEngine implements TransformEngine {
+public class LiteparseEngine implements TransformEngine {
 
-    private static final String ENGINE_NAME = "whisper";
-    private static final String CONFIG_PATH = "classpath:whisper_engine_config.json";
+    private static final String ENGINE_NAME = "liteparse";
+    private static final String CONFIG_PATH = "classpath:liteparse_engine_config.json";
 
     private final TransformConfigResourceReader transformConfigResourceReader;
 
@@ -25,7 +25,7 @@ public class WhisperEngine implements TransformEngine {
 
     @Override
     public String getStartupMessage() {
-        return "Startup " + ENGINE_NAME;
+        return "Startup " + ENGINE_NAME + "\nExtracts text from PDFs and Office documents using LiteParse.";
     }
 
     @Override
@@ -35,7 +35,7 @@ public class WhisperEngine implements TransformEngine {
 
     @Override
     public ProbeTransform getProbeTransform() {
-        return new ProbeTransform("sample.mp3", "audio/mpeg", "text/plain", Map.of(),
-                120, 8, 800, 10240, 3601, 1840);
+        return new ProbeTransform("sample.pdf", "application/pdf", "text/markdown", Map.of(),
+                300, 16, 800, 20480, 3601, 1840);
     }
 }

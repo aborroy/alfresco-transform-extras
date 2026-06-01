@@ -1,5 +1,5 @@
 FROM eclipse-temurin:21-jre AS runtime
-RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
+RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
 COPY target/alf-tengine-ai-1.0.0-exec.jar ai.jar
 USER alfte

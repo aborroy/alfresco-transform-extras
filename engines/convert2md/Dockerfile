@@ -20,7 +20,7 @@ ENV HF_HOME=/usr/local/share/huggingface
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libmagic1 poppler-utils \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN groupadd -g 1001 alfresco && useradd -u 33017 -g alfresco -m alfte
+RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
 COPY target/alf-tengine-convert2md-1.0.0-exec.jar convert2md.jar
 USER alfte

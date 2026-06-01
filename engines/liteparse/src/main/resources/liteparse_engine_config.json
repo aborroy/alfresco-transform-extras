@@ -1,0 +1,19 @@
+{
+  "transformers": [
+    {
+      "transformerName": "liteparse",
+      "supportedSourceAndTargetList": [
+        {"sourceMediaType": "application/pdf",                                                                          "targetMediaType": "text/markdown", "maxSourceSizeBytes": 52428800, "priority": 50},
+        {"sourceMediaType": "application/pdf",                                                                          "targetMediaType": "text/plain",    "maxSourceSizeBytes": 52428800, "priority": 45},
+        {"sourceMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",                  "targetMediaType": "text/markdown", "maxSourceSizeBytes": 52428800, "priority": 50},
+        {"sourceMediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",                  "targetMediaType": "text/plain",    "maxSourceSizeBytes": 52428800, "priority": 45},
+        {"sourceMediaType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",                        "targetMediaType": "text/markdown", "maxSourceSizeBytes": 52428800, "priority": 50},
+        {"sourceMediaType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",                        "targetMediaType": "text/plain",    "maxSourceSizeBytes": 52428800, "priority": 45},
+        {"sourceMediaType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",                "targetMediaType": "text/markdown", "maxSourceSizeBytes": 52428800, "priority": 50},
+        {"sourceMediaType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",                "targetMediaType": "text/plain",    "maxSourceSizeBytes": 52428800, "priority": 45},
+        {"sourceMediaType": "application/msword",                                                                       "targetMediaType": "text/markdown", "maxSourceSizeBytes": 52428800, "priority": 50},
+        {"sourceMediaType": "application/msword",                                                                       "targetMediaType": "text/plain",    "maxSourceSizeBytes": 52428800, "priority": 45}
+      ]
+    }
+  ]
+}

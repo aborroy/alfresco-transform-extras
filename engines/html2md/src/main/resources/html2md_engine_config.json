@@ -5,11 +5,13 @@
       "supportedSourceAndTargetList": [
         {
           "sourceMediaType": "text/html",
-          "targetMediaType": "text/markdown"
+          "targetMediaType": "text/markdown",
+          "priority": 50
         },
         {
           "sourceMediaType": "application/xhtml+xml",
-          "targetMediaType": "text/markdown"
+          "targetMediaType": "text/markdown",
+          "priority": 50
         }
       ]
     }

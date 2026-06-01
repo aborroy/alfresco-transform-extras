@@ -64,6 +64,7 @@ public class WhisperTransformer implements CustomTransformer {
             case "audio/wav"        -> ".wav";
             case "audio/ogg"        -> ".ogg";
             case "audio/flac"       -> ".flac";
+            case "audio/mp4"        -> ".m4a";
             case "video/mp4"        -> ".mp4";
             case "video/quicktime"  -> ".mov";
             case "video/x-msvideo" -> ".avi";
