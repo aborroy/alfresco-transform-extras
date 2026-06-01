@@ -133,14 +133,14 @@ RUN ARCH=$(dpkg --print-architecture) && \
     | tar -xz --strip-components=2 -C /usr/local/bin "pandoc-${PANDOC_VERSION}/bin/pandoc"
 
 # Python environment from stage 2 — the engine code calls "python3" via PATH,
-# so we symlink it to the 3.11 binary that matches the site-packages we copy.
-COPY --from=python-deps /usr/local/lib/python3.11 /usr/local/lib/python3.11
-COPY --from=python-deps /usr/local/lib/libpython3.11.so.1.0 /usr/local/lib/libpython3.11.so.1.0
+# so we symlink it to the 3.13 binary that matches the site-packages we copy.
+COPY --from=python-deps /usr/local/lib/python3.13 /usr/local/lib/python3.13
+COPY --from=python-deps /usr/local/lib/libpython3.13.so.1.0 /usr/local/lib/libpython3.13.so.1.0
 COPY --from=python-deps /usr/local/bin/whisper /usr/local/bin/whisper
 COPY --from=python-deps /usr/local/bin/ocrmypdf /usr/local/bin/ocrmypdf
-COPY --from=python-deps /usr/local/bin/python3.11 /usr/local/bin/python3.11
-RUN ln -sf /usr/local/bin/python3.11 /usr/local/bin/python3 \
-    && ln -sf /usr/local/bin/python3.11 /usr/local/bin/python
+COPY --from=python-deps /usr/local/bin/python3.13 /usr/local/bin/python3.13
+RUN ln -sf /usr/local/bin/python3.13 /usr/local/bin/python3 \
+    && ln -sf /usr/local/bin/python3.13 /usr/local/bin/python
 
 # Pre-fetched docling/HuggingFace model cache from stage 2. Chmod so the
 # non-root alfte user can write HF's lock/refs files (HF still touches
