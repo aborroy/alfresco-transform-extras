@@ -1,0 +1,421 @@
+<p>A user uploads a scanned contract. Nobody can search it. A colleague adds a meeting recording — no transcript appears. An iPhone photo lands in the repository as <code>.heic</code> and Share renders nothing. These are real gaps in Alfresco's default transform pipeline, and they come up often.</p>
+
+<p>Alfresco Transform Services convert documents from one format to another: LibreOffice turns DOCX into PDF, ImageMagick generates image thumbnails, Tika extracts metadata from Office files. The official <code>alfresco-transform-core</code> AIO image covers those bases well. What it does not cover is OCR, speech-to-text, PII redaction, AI-generated metadata, video thumbnails, HEIC images, or the growing Markdown ecosystem.</p>
+
+<p><code>alfresco-transform-extras</code> is an open-source Maven multi-module project that fills this gap by adding 15 additional Transform Engines. Every engine follows the same standard t-engine contract, so from Alfresco's perspective they are indistinguishable from the official ones. No patches, no forks, no core modifications.</p>
+
+<p>This post covers what each engine does, how to deploy them whether you run Community or Enterprise edition, and how to write a new engine from scratch.</p>
+
+<hr />
+
+<h2>The 15 Engines at a Glance</h2>
+
+<p>A t-engine is a microservice that receives a source file and optional transform options over HTTP, applies a transformation, and returns the result. Alfresco sends the request; the engine does the work. The two sides only need to agree on MIME types and the <code>/transform</code> endpoint.</p>
+
+<p>The 15 engines fall into six groups:</p>
+
+<table style="border-collapse: collapse; width: 100%;">
+  <thead>
+    <tr>
+      <th style="border: 1px solid #ccc; padding: 8px; background-color: #f0f0f0; text-align: left;">Group</th>
+      <th style="border: 1px solid #ccc; padding: 8px; background-color: #f0f0f0; text-align: left;">Engines</th>
+      <th style="border: 1px solid #ccc; padding: 8px; background-color: #f0f0f0; text-align: left;">Key Technology</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">Metadata extraction</td>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>xml</code>, <code>excel</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Java DOM, Apache POI</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">Markdown ecosystem</td>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>html2md</code>, <code>md2html</code>, <code>markdown</code>, <code>md2doc</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Pandoc + XeLaTeX</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">Email</td>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>msg</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Apache POI + Pandoc</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">PDF tools</td>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>ocr</code>, <code>pii</code>, <code>pdf2docx</code>, <code>convert2md</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Tesseract, Presidio, pdf2docx, Docling</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">Rich media</td>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>videothumb</code>, <code>heic</code>, <code>whisper</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">ffmpeg, libheif, OpenAI Whisper (local)</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;">AI / LLM</td>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>ai</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Docker Model Runner (local LLM)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Metadata extraction</strong>: <code>xml</code> reads Dublin Core and custom element values from XML files; <code>excel</code> reads workbook properties and custom document properties from XLS and XLSX files. Both write directly into Alfresco content model properties.</p>
+
+<p><strong>Markdown ecosystem</strong>: four engines covering every direction — HTML to Markdown, Markdown to HTML, Markdown to PDF (with full LaTeX rendering), and Markdown to DOCX. Useful for documentation-heavy repositories or content published in multiple formats.</p>
+
+<p><strong>Email</strong>: <code>msg</code> converts Outlook MSG and EML files to PDF, preserving headers and body, so email archives become searchable renditions.</p>
+
+<p><strong>PDF tools</strong>: <code>ocr</code> adds a hidden text layer to scanned PDFs using Tesseract, making them full-text searchable without altering the visual content. <code>pii</code> detects personally identifiable information using Microsoft Presidio, redacts it with black boxes, and writes the detected PII categories back as Alfresco metadata. <code>pdf2docx</code> converts PDFs to editable DOCX files. <code>convert2md</code> uses the Docling ML library to extract structured Markdown from PDFs, preserving tables and headings.</p>
+
+<p><strong>Rich media</strong>: <code>videothumb</code> extracts a JPEG thumbnail from any video format using ffmpeg. <code>heic</code> converts HEIC/HEIF images — the default format on iPhones — to JPEG or PNG. <code>whisper</code> transcribes audio and video to plain text using the OpenAI Whisper model running entirely locally.</p>
+
+<p><strong>AI</strong>: the <code>ai</code> engine sends document content to a local large language model via Docker Model Runner and writes AI-generated metadata (title, description, tags, language) back to Alfresco content model properties. No external API call, no API key.</p>
+
+<hr />
+
+<h2>Deployment</h2>
+
+<h3>AIO vs Individual Containers</h3>
+
+<p>The project ships two deployment modes.</p>
+
+<p><strong>AIO (All-In-One)</strong> packages all 15 engines into a single Docker image. It is the simplest way to get started and covers every transform capability from one container:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>services:
+  tengine-aio:
+    image: angelborroy/alfresco-transform-extras-aio:latest
+    ports:
+      - "8090:8090"
+    environment:
+      JAVA_OPTS: "-Xms256m -Xmx2g"
+      MANAGEMENT_HEALTH_JMS_ENABLED: "false"
+      TEST_ENDPOINT_ENABLED: "true"
+      TRANSFORM_AI_ENDPOINT: "http://model-runner.docker.internal/engines/llama.cpp/v1"
+      TRANSFORM_AI_MODEL: "ai/smollm2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s</code></pre>
+
+<p>The trade-off: the image is large (several GB, including ML models pre-fetched at build time), and restarting the container for one engine upgrade restarts all of them.</p>
+
+<p><strong>Individual containers</strong> run each engine as a separate service. This is the production pattern: you can scale OCR horizontally without affecting Whisper, upgrade one engine without touching others, and avoid paying the memory cost for engines you do not use.</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>services:
+  transform-ocr:
+    image: angelborroy/alf-tengine-ocr:latest
+    ports:
+      - "8091:8090"
+
+  transform-whisper:
+    image: angelborroy/alf-tengine-whisper:latest
+    ports:
+      - "8092:8090"
+    deploy:
+      resources:
+        limits:
+          memory: 4g</code></pre>
+
+<h3>Wiring into Alfresco Community Edition</h3>
+
+<p>Community Edition talks directly to transform engines via HTTP — no Transform Router, no message queue. Register each engine in <code>alfresco-global.properties</code> with a <code>localTransform.&lt;name&gt;.url</code> property. The key segment (e.g., <code>ocr</code>) must match the engine name declared in the engine's config:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code># Register individual engines
+localTransform.ocr.url=http://transform-ocr:8091/
+localTransform.whisper.url=http://transform-whisper:8092/
+localTransform.pii.url=http://transform-pii:8093/
+localTransform.videothumb.url=http://transform-videothumb:8094/
+
+# Or register the AIO image with a single property
+localTransform.extras.url=http://tengine-aio:8090/</code></pre>
+
+<p>When using the AIO image, the single <code>localTransform.extras.url</code> property is enough — all 15 engines are served from the same container.</p>
+
+<h3>Wiring into Alfresco Enterprise Edition</h3>
+
+<p>Enterprise uses the Transform Router and ActiveMQ. Engines self-register by advertising their capabilities when they start, and the router discovers them automatically. Point each engine at your ActiveMQ broker and Shared File Store:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>environment:
+  ACTIVEMQ_URL: "failover:(nio://activemq:61616)?timeout=3000"
+  FILE_STORE_URL: "http://shared-file-store:8099/alfresco/api/-default-/private/sfs/versions/1/file"
+  TRANSFORMER_URL_OCR: "http://transform-ocr:8090/"
+  TRANSFORMER_URL_WHISPER: "http://transform-whisper:8090/"</code></pre>
+
+<p>No manual route configuration is needed beyond these environment variables. Consult Hyland's Transform Router documentation for TLS and authentication settings in production.</p>
+
+<h3>Health Checks and Testing</h3>
+
+<p>Every engine exposes a Spring Boot Actuator health endpoint. The probe performs a real transform on a bundled sample file at startup — a missing system dependency (e.g., <code>ocrmypdf</code> not installed in the image) causes an immediate <code>DOWN</code> status rather than a silent failure at transform time.</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>curl http://localhost:8091/actuator/health
+# {"status":"UP"}</code></pre>
+
+<p>The project includes <code>smoke-test.sh</code>, which runs 40+ transforms across all engines and validates HTTP 200 responses with non-empty bodies. Run it after <code>docker compose up</code> to confirm all engines are working end-to-end.</p>
+
+<h3>Resource Sizing</h3>
+
+<table style="border-collapse: collapse; width: 100%;">
+  <thead>
+    <tr>
+      <th style="border: 1px solid #ccc; padding: 8px; background-color: #f0f0f0; text-align: left;">Engine</th>
+      <th style="border: 1px solid #ccc; padding: 8px; background-color: #f0f0f0; text-align: left;">CPU</th>
+      <th style="border: 1px solid #ccc; padding: 8px; background-color: #f0f0f0; text-align: left;">Memory</th>
+      <th style="border: 1px solid #ccc; padding: 8px; background-color: #f0f0f0; text-align: left;">Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>xml</code>, <code>excel</code>, <code>markdown</code> variants</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">1 core</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">512 MB</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Lightweight</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>ocr</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">2 cores</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">1 GB</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Scales horizontally well</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>pii</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">2 cores</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">2 GB min</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Presidio NLP model</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>pdf2docx</code>, <code>videothumb</code>, <code>heic</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">1 core</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">1 GB</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Moderate</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>whisper</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">4 cores</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">4 GB</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">GPU optional via CUDA image</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>convert2md</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">2 cores</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">4 GB</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Docling ML model loaded at startup</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 8px;"><code>ai</code></td>
+      <td style="border: 1px solid #ccc; padding: 8px;">—</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">8+ GB</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">Depends on Docker Model Runner model</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2>Inside One Engine: OCR from End to End</h2>
+
+<p>The <code>ocr</code> engine is a clean reference case — one input type (PDF), one output type (searchable PDF), one external tool call. Tracing a single transform request shows exactly how the framework fits together.</p>
+
+<p>When Alfresco requests an OCR transform, it POSTs the source PDF to <code>http://transform-ocr:8090/transform</code> with <code>targetMediaType=application/pdf</code> and optionally a <code>language</code> parameter.</p>
+
+<p>The framework routes the request to <code>OcrTransformer</code> because its declared source/target MIME pair matches. The <code>transform()</code> method writes the incoming bytes to a temp file, calls <code>OcrService</code>, which runs <code>ocrmypdf</code> via <code>ProcessBuilder</code>, then streams the output bytes back:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>@Override
+public void transform(String sourceMimetype, InputStream inputStream,
+                      String targetMimetype, OutputStream outputStream,
+                      Map&lt;String, String&gt; transformOptions,
+                      TransformManager transformManager) throws Exception {
+
+    String language = transformOptions.getOrDefault("language", "eng");
+
+    Path tempDir = Files.createTempDirectory("ocr-transform-");
+    File inputFile = tempDir.resolve("input.pdf").toFile();
+
+    try {
+        Files.copy(inputStream, inputFile.toPath());
+        File outputFile = ocrService.ocr(inputFile, language);
+        Files.copy(outputFile.toPath(), outputStream);
+    } finally {
+        // clean up temp directory
+    }
+}</code></pre>
+
+<p><code>OcrEngine</code> handles registration. It tells the framework the engine name, points to the config JSON, and defines the health probe — a real <code>ocrmypdf</code> run on a bundled <code>sample.pdf</code>:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>@Override
+public ProbeTransform getProbeTransform() {
+    return new ProbeTransform(
+            "sample.pdf", "application/pdf", "application/pdf",
+            Map.of(), 120, 16, 800, 20480, 3601, 1840);
+}</code></pre>
+
+<p>The config JSON declares the supported MIME pair and the optional <code>language</code> parameter:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>{
+  "transformOptions": {
+    "ocrOptions": [
+      { "value": { "name": "language" } }
+    ]
+  },
+  "transformers": [{
+    "transformerName": "ocr",
+    "supportedSourceAndTargetList": [
+      {
+        "sourceMediaType": "application/pdf",
+        "targetMediaType": "application/pdf",
+        "maxSourceSizeBytes": 52428800
+      }
+    ],
+    "transformOptions": ["ocrOptions"]
+  }]
+}</code></pre>
+
+<p>All 15 engines follow this same structure. Switching from <code>CustomTransformer</code> to <code>AbstractMetadataExtractorEmbedder</code> is the only variation — used by <code>xml</code>, <code>excel</code>, <code>pii</code>, and <code>ai</code> to write metadata back into Alfresco properties instead of returning a converted file.</p>
+
+<hr />
+
+<h2>Building a New Engine</h2>
+
+<p>If you need a transform not covered by the existing 15, the pattern is straightforward. Here is how to add a hypothetical <code>barcode</code> engine that reads barcodes from images and returns the decoded text.</p>
+
+<h3>The Three Files</h3>
+
+<p><strong><code>BarcodeEngine.java</code></strong> — registers the engine with the framework:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>@Component
+@RequiredArgsConstructor
+public class BarcodeEngine implements TransformEngine {
+
+    private final TransformConfigResourceReader transformConfigResourceReader;
+
+    @Override
+    public String getTransformEngineName() { return "barcode"; }
+
+    @Override
+    public String getStartupMessage() { return "Startup barcode"; }
+
+    @Override
+    public TransformConfig getTransformConfig() {
+        return transformConfigResourceReader.read("classpath:barcode_engine_config.json");
+    }
+
+    @Override
+    public ProbeTransform getProbeTransform() {
+        return new ProbeTransform("sample.png", "image/png", "text/plain",
+                Map.of(), 60, 16, 400, 1024, 600, 400);
+    }
+}</code></pre>
+
+<p><strong><code>BarcodeTransformer.java</code></strong> — implements the transform logic:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>@Slf4j
+@Component
+@RequiredArgsConstructor
+public class BarcodeTransformer implements CustomTransformer {
+
+    @Override
+    public String getTransformerName() { return "barcode"; }
+
+    @Override
+    public void transform(String sourceMimetype, InputStream inputStream,
+                          String targetMimetype, OutputStream outputStream,
+                          Map&lt;String, String&gt; transformOptions,
+                          TransformManager transformManager) throws Exception {
+
+        Path tempDir = Files.createTempDirectory("barcode-");
+        File inputFile = tempDir.resolve("input.png").toFile();
+        try {
+            Files.copy(inputStream, inputFile.toPath());
+
+            List&lt;String&gt; cmd = List.of("zbarimg", "--raw", inputFile.getAbsolutePath());
+            Process proc = new ProcessBuilder(cmd)
+                    .redirectErrorStream(true)
+                    .start();
+            byte[] output = proc.getInputStream().readAllBytes();
+            int exitCode = proc.waitFor();
+            if (exitCode != 0) throw new RuntimeException("zbarimg failed: " + new String(output));
+
+            outputStream.write(output);
+        } finally {
+            // clean up
+        }
+    }
+}</code></pre>
+
+<p>For metadata engines (where the result is written as Alfresco properties rather than a returned file), extend <code>AbstractMetadataExtractorEmbedder</code> and override <code>extractMetadata()</code> returning a <code>Map&lt;String, Serializable&gt;</code>.</p>
+
+<p><strong><code>barcode_engine_config.json</code></strong> — declares the supported MIME pairs:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code>{
+  "transformers": [{
+    "transformerName": "barcode",
+    "supportedSourceAndTargetList": [
+      { "sourceMediaType": "image/png",  "targetMediaType": "text/plain" },
+      { "sourceMediaType": "image/jpeg", "targetMediaType": "text/plain" }
+    ]
+  }]
+}</code></pre>
+
+<p>You also need:</p>
+<ul>
+  <li><code>application-default.yaml</code> — Spring Boot config with the queue name and transform version</li>
+  <li><code>sample.png</code> — a real barcode image the health probe can successfully transform</li>
+  <li><code>_metadata_extract.properties</code> — only for metadata engines; maps extracted key names to <code>cm:</code> content model properties</li>
+</ul>
+
+<h3>Wiring the Module into the Project</h3>
+
+<p>Once the three files exist, wire the module in seven steps:</p>
+
+<ol>
+  <li>Create <code>engines/barcode/</code> as a Maven module with the standard <code>pom.xml</code> (copy from any existing engine; keep the <code>spring-boot-maven-plugin</code> block with <code>&lt;classifier&gt;exec&lt;/classifier&gt;</code>)</li>
+  <li>Add <code>&lt;module&gt;engines/barcode&lt;/module&gt;</code> to root <code>pom.xml</code> <strong>before</strong> <code>engines/aio</code> — the AIO module must come last</li>
+  <li>Add the barcode artifact as a <code>&lt;dependency&gt;</code> in <code>engines/aio/pom.xml</code> so it is included in the all-in-one image</li>
+  <li>Write <code>engines/barcode/Dockerfile</code> — typically <code>FROM eclipse-temurin:21-jre</code>, install <code>zbar-tools</code>, copy the exec JAR</li>
+  <li>Add <code>make build-barcode</code> to the <code>Makefile</code> using the <code>$(call build-engine,...)</code> helper</li>
+  <li>Add <code>barcode</code> to the <code>build-engines</code>, <code>push-engines</code>, and <code>clean-engines</code> loops in the <code>Makefile</code></li>
+  <li>Add a smoke-test assertion to <code>smoke-test.sh</code> — POST a sample PNG, assert HTTP 200 and a non-empty response</li>
+</ol>
+
+<h3>Testing Without Alfresco</h3>
+
+<p>You can validate a new engine entirely independently of Alfresco:</p>
+
+<pre style="background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 14px; overflow-x: auto; font-size: 13px; line-height: 1.5;"><code># Build and start
+mvn clean package -pl engines/barcode
+docker build -t alfresco-transform-barcode:latest engines/barcode/
+docker run --rm -p 8090:8090 -e TEST_ENDPOINT_ENABLED=true alfresco-transform-barcode:latest
+
+# Confirm it starts clean
+curl http://localhost:8090/actuator/health
+# {"status":"UP"}
+
+# Run a real transform
+curl -X POST http://localhost:8090/transform \
+  -F "file=@sample.png;type=image/png" \
+  -F "targetMediaType=text/plain" \
+  -o result.txt &amp;&amp; cat result.txt</code></pre>
+
+<p>Only after the container passes health and returns the expected output should you wire it into Alfresco via <code>localTransform.barcode.url</code>.</p>
+
+<hr />
+
+<h2>A Few Engines Worth Extra Attention</h2>
+
+<p><strong><code>ai</code></strong>: requires Docker Model Runner, available in Docker Desktop 4.40 and later. The engine calls a local OpenAI-compatible API endpoint — no OpenAI API key, no outbound network call. The model (default: <code>ai/smollm2</code>) is loaded by Docker Model Runner separately. Memory requirements depend on the model; plan for 8 GB or more for a typical LLM.</p>
+
+<p><strong><code>whisper</code></strong>: the <code>openai-whisper</code> Python library runs entirely locally — there is no call to OpenAI's API despite the name. Transcription time scales linearly with audio length; set a generous <code>localTransform.timeout</code> in <code>alfresco-global.properties</code> for long recordings. A CUDA-enabled image variant is available for GPU acceleration.</p>
+
+<p><strong><code>pii</code></strong>: behaves differently from most engines — it produces two outputs from one input. It returns a redacted PDF (PII replaced with black boxes) as the rendition and writes the detected PII categories (email, phone number, person name, etc.) as Alfresco metadata properties. Before enabling this engine in production, decide whether redaction should replace the original or create a new rendition, and review your organisation's retention policy for the PII metadata itself.</p>
+
+<p><strong><code>convert2md</code></strong>: Docling ML models are downloaded and cached at image build time, so the first request does not stall waiting for a model download. In air-gapped environments, build the image on a connected machine and transfer it — or mount a pre-populated HuggingFace cache volume at <code>/root/.cache/huggingface</code>.</p>
+
+<hr />
+
+<h2>Conclusion</h2>
+
+<p><code>alfresco-transform-extras</code> adds 15 engines to Alfresco's transform pipeline with no changes to the core platform. OCR, AI metadata extraction, speech transcription, PII redaction, video thumbnails, HEIC conversion, and the full Markdown ecosystem become standard Alfresco capabilities.</p>
+
+<p>For DevOps teams: use the AIO image to get all 15 engines running in minutes, or deploy individual containers in production to scale and upgrade them independently. The wiring into both Community and Enterprise editions follows the same patterns you already use for the official engines.</p>
+
+<p>For developers: the three-file pattern — Engine, Transformer, config JSON — is the entire contract. Any Java developer familiar with Spring Boot can add a new engine in an afternoon. The external tool can be anything reachable via <code>ProcessBuilder</code>: a Python script, a compiled binary, an HTTP service.</p>
+
+<p>The project source, Dockerfiles, and Makefile are on GitHub. Try the AIO image in your local Alfresco stack, and if you build an engine that others would find useful, open a pull request.</p>
