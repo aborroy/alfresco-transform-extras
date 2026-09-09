@@ -1,0 +1,117 @@
+alfresco-transform-extras
+Copyright 2026 Angel Borroy
+
+This product includes software developed at
+the Alfresco Software Foundation (https://www.alfresco.com/).
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file.
+
+================================================================================
+Third-party components
+================================================================================
+
+The Java sources in this repository are Apache-2.0. The published container
+images additionally bundle third-party software, and that software keeps its own
+licence. This file lists what each image contains so downstream consumers can
+satisfy the attribution obligations that come with it.
+
+Licences were confirmed from package metadata rather than assumed. Versions are
+the build defaults; several are overridable at build time (see "Version pinning"
+in README.md), so an image built with an override may differ from this list.
+
+Inherited by every engine
+-------------------------
+  org.alfresco:alfresco-transform-core 5.4.1        Apache-2.0
+  org.alfresco:alfresco-base-t-engine                Apache-2.0
+  Spring Boot and Spring Framework                   Apache-2.0
+  Project Lombok                                     MIT
+  eclipse-temurin:21-jre (OpenJDK)                   GPL-2.0-only WITH Classpath-exception-2.0
+  Debian base packages (from the above image)        various, see the image
+  python:3.13-slim (CPython)                         PSF-2.0
+
+Per engine
+----------
+
+ai
+  No bundled inference engine. Calls an external OpenAI-compatible endpoint
+  (Docker Model Runner by default). The model served there carries its own
+  licence, which this project neither includes nor grants.
+
+convert2md
+  docling 2.96.1                                     MIT
+  onnxruntime 1.26.0                                 MIT
+  Layout and OCR model weights pre-fetched at build time from Hugging Face
+  carry their own upstream licences; check the model cards for the versions
+  docling 2.96.1 resolves.
+
+excel
+  Apache POI (poi-ooxml)                             Apache-2.0
+
+heic
+  libheif                                            LGPL-3.0-or-later
+  libde265 / x265 as configured by the distribution  LGPL / GPL, see the image
+
+html2md, md2html, markdown, md2doc, msg
+  Pandoc 3.9.0.2                                     GPL-2.0-or-later
+  TeX Live / XeLaTeX (markdown, md2doc only)         LPPL and others
+  Apache POI HSMF (msg only)                         Apache-2.0
+
+  Note: Pandoc is GPL-2.0-or-later. It is invoked as a separate executable
+  rather than linked, but it is redistributed inside these images, so the GPL's
+  source-availability obligations attach to those images.
+
+liteparse
+  liteparse 2.0.4                                    Apache-2.0
+  LibreOffice 26.2 (calc, writer, impress)           MPL-2.0
+  PDFium (bundled inside liteparse)                  BSD-3-Clause
+
+ocr
+  OCRmyPDF 17.5.0                                    MPL-2.0
+  Tesseract OCR                                      Apache-2.0
+  Ghostscript, as pulled in by OCRmyPDF              AGPL-3.0
+
+pdf2docx
+  pdf2docx 0.5.13                                    MIT
+  PyMuPDF (transitive dependency)                    AGPL-3.0-only or commercial
+
+pii
+  presidio-analyzer 2.2.362                          MIT
+  presidio-anonymizer 2.2.362                        MIT
+  spaCy 3.8.14                                       MIT
+  en_core_web_lg model                               MIT
+  PyMuPDF 1.27.2.3                                   AGPL-3.0-only or commercial
+
+  Note: PyMuPDF is dual licensed, AGPL-3.0 or an Artifex commercial licence.
+  The AGPL's network-use clause is triggered by exactly the deployment shape
+  this project targets, a network-reachable transform service. Anyone
+  redistributing or operating the pii or pdf2docx images should satisfy the
+  AGPL or hold a commercial licence from Artifex.
+
+videothumb
+  FFmpeg                                             LGPL-2.1-or-later, or
+                                                     GPL-2.0-or-later depending
+                                                     on the distribution build
+
+whisper
+  openai-whisper 20250625                            MIT
+  Whisper model weights                              MIT
+  FFmpeg                                             see videothumb
+
+xml
+  Java DOM (JDK)                                     see eclipse-temurin above
+
+================================================================================
+Scope of this file
+================================================================================
+
+This is an attribution aid, not legal advice, and not a warranty that the list
+is exhaustive: transitive dependencies of the packages above bring in further
+components. Generate a full inventory from a built image if you need one, for
+example with `docker sbom` or `syft`, which is also what the `buildx` targets in
+the Makefile attach as an SBOM.
+
+The engines with copyleft components are called out above rather than buried:
+Pandoc (GPL) in the five Pandoc-based engines, Ghostscript (AGPL) in ocr, and
+PyMuPDF (AGPL or commercial) in pii and pdf2docx. The two engines with no
+copyleft component at all are convert2md and liteparse, whose bundled software
+is MIT, Apache-2.0, MPL-2.0 and BSD-3-Clause.

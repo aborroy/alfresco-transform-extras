@@ -9,7 +9,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
     | tar -xz --strip-components=2 -C /usr/local/bin "pandoc-${PANDOC_VERSION}/bin/pandoc"
 RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
-COPY target/alf-tengine-markdown-1.0.0-exec.jar markdown.jar
+COPY target/alf-tengine-markdown-1.1.0-exec.jar markdown.jar
 USER alfte
 EXPOSE 8090
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/markdown.jar"]

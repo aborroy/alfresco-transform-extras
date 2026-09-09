@@ -6,10 +6,31 @@
 
   <groupId>org.alfresco.transform.extras</groupId>
   <artifactId>alfresco-transform-extras</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <packaging>pom</packaging>
   <name>alfresco-transform-extras</name>
   <description>All-In-One container with additional Alfresco Transform Engines</description>
+  <url>https://github.com/aborroy/alfresco-transform-extras</url>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <!--
+    The Java sources here are Apache-2.0. The published container images bundle
+    third-party software that keeps its own licence, including copyleft
+    components in some engines. See NOTICE for the per-engine inventory.
+  -->
+
+  <scm>
+    <url>https://github.com/aborroy/alfresco-transform-extras</url>
+    <connection>scm:git:https://github.com/aborroy/alfresco-transform-extras.git</connection>
+    <developerConnection>scm:git:git@github.com:aborroy/alfresco-transform-extras.git</developerConnection>
+  </scm>
 
   <parent>
     <groupId>org.alfresco</groupId>

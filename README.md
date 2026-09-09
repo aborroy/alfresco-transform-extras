@@ -6,7 +6,7 @@ Additional [Alfresco Transform Engines](https://github.com/Alfresco/alfresco-tra
 
 | Engine | Source → Target | External tool |
 |--------|----------------|---------------|
-| `convert2md` | PDF → Markdown | [Docling](https://github.com/docling-project/docling) |
+| `convert2md` | PDF → Markdown (tables preserved) | [Docling](https://github.com/docling-project/docling) |
 | `md2doc` | Markdown → DOCX, PDF | [Pandoc](https://pandoc.org) + XeLaTeX |
 | `markdown` | Markdown → PDF | Pandoc + XeLaTeX |
 | `html2md` | HTML, XHTML → Markdown | Pandoc |
@@ -21,7 +21,25 @@ Additional [Alfresco Transform Engines](https://github.com/Alfresco/alfresco-tra
 | `excel` | XLS, XLSX → metadata | Apache POI |
 | `xml` | XML → metadata | Java DOM |
 | `ai` | Text, PDF → AI metadata | Local LLM via [Docker Model Runner](https://www.docker.com/products/model-runner/) |
-| `liteparse` | PDF, DOCX, XLSX, PPTX, DOC → Markdown, Text | [LiteParse](https://pypi.org/project/liteparse/) + LibreOffice |
+| `liteparse` | PDF, DOCX, XLSX, XLS, PPTX, DOC → Markdown\*, Text | [LiteParse](https://pypi.org/project/liteparse/) + LibreOffice + Apache POI |
+
+\* **`liteparse` Markdown includes tables for spreadsheets only.**
+
+Spreadsheets (XLSX, XLS) are read cell by cell with Apache POI rather than through LiteParse, so every
+column is preserved and the grid becomes a real Markdown table. Sheet names become `##` headings, and
+narrative text in a single column stays prose rather than being folded into the table beside it.
+
+For PDF, DOCX, PPTX and DOC the Markdown output is per-page text with a `## Page N` heading and a
+`---` separator: headings survive, table structure does not, and a table arrives as space-padded
+columns. That is a limitation of the parser, not a bug here. LiteParse 2.0.4 exposes no table model at
+all: a `ParsedPage` carries only `text` and positioned `text_items`, and `output_format` accepts just
+`json` or `text`. Verified by measurement rather than inferred, across PDF and DOCX fixtures the
+Markdown output contains zero pipe rows.
+
+Use `convert2md` when Markdown **tables** are the point for PDFs. On the same PDF fixtures its
+separator-row count matched the source table count exactly, with every column and value preserved. The
+trade is speed: roughly 20 s per two-page PDF against 0.3 to 0.7 s for `liteparse`, so pick per corpus
+rather than globally.
 
 ## After cloning
 
@@ -36,7 +54,7 @@ make generate-samples   # requires pandoc, ffmpeg, heif-enc, python3+openpyxl, a
 ### AIO container (all 16 engines)
 
 ```bash
-git clone https://github.com/angelborroy/alfresco-transform-extras
+git clone https://github.com/aborroy/alfresco-transform-extras
 cd alfresco-transform-extras
 make build
 docker compose up
@@ -332,10 +350,29 @@ make clean-all
 Override variables on any target:
 
 ```bash
-make buildx PLATFORMS=linux/amd64,linux/arm64 VERSION=1.0.0
+make buildx PLATFORMS=linux/amd64,linux/arm64 VERSION=1.1.0
 make buildx-ocr TESSERACT_LANGUAGES=eng,spa,fra OCRMYPDF_VERSION=16
 make buildx BUILDER=my-builder
 ```
+
+## Releasing
+
+Image tags are independent of the Maven version: `VERSION` in the Makefile drives the tag and defaults
+to `latest`, so a release needs no POM change and no Dockerfile edit.
+
+```bash
+# Multi-platform, with SBOM and provenance, pushed to the registry
+make buildx-engines VERSION=1.1.0
+make buildx VERSION=1.1.0          # the AIO image
+
+# Then tag the source that produced them
+git tag -a v1.1.0 -m "1.1.0"
+git push origin v1.1.0
+```
+
+Publish a version tag rather than relying on `latest`. A consumer that pins `latest` cannot reproduce a
+build, and `latest` moving under them changes extraction behaviour silently. Before 1.1.0 only
+`convert2md` published a version tag (`1.0.0`) and every other engine published `latest` only.
 
 ## Superseded projects
 
@@ -360,5 +397,34 @@ Inherits from `org.alfresco:alfresco-transform-core:5.4.1`. Engines work alongsi
 | 7.x | `localTransform.*` properties | Transform Router + ActiveMQ |
 | 23.x | `localTransform.*` properties | Transform Router + ActiveMQ |
 | 25.x | `localTransform.*` properties | Transform Router + ActiveMQ |
+| 26.x | `localTransform.*` properties | Transform Router + ActiveMQ |
 
 Minimum Java version: **17** (required by ACS 25.2+).
+
+ACS 26.2 was verified only for the direct-HTTP path: an engine was started standalone and driven over
+`POST /transform` and `GET /transform/config`, which is how a non-ACS consumer uses it. Registration
+through `localTransform.*` against an ACS 26.x repository, and routing through an Enterprise Transform
+Router at that version, have not been exercised. Treat the 26.x row as "the engine protocol works",
+not as a certified ACS integration.
+
+Nothing in an engine is ACS-specific: they implement the `alfresco-transform-core` HTTP contract, so
+any client that can POST a multipart form to `/transform` can use them, with no repository involved.
+
+## Licence
+
+The Java sources in this repository are licensed under the Apache License, Version 2.0. See
+[LICENSE](LICENSE).
+
+The published container images additionally bundle third-party software that keeps its own licence,
+and some of it is copyleft. [NOTICE](NOTICE) lists the components per engine. The points worth knowing
+before redistributing an image:
+
+- `convert2md` and `liteparse` bundle only permissive components (MIT, Apache-2.0, MPL-2.0,
+  BSD-3-Clause).
+- `html2md`, `md2html`, `markdown`, `md2doc` and `msg` bundle Pandoc, which is GPL-2.0-or-later.
+- `ocr` pulls in Ghostscript (AGPL-3.0).
+- `pii` and `pdf2docx` bundle PyMuPDF, which is AGPL-3.0 or an Artifex commercial licence. The AGPL's
+  network-use clause is triggered by the deployment shape these engines are built for, a
+  network-reachable service.
+
+This is attribution guidance, not legal advice.

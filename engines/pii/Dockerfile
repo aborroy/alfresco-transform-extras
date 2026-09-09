@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
 COPY docker/presidio/ /opt/presidio/
 RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
-COPY engines/pii/target/alf-tengine-pii-1.0.0-exec.jar pii.jar
+COPY engines/pii/target/alf-tengine-pii-1.1.0-exec.jar pii.jar
 USER alfte
 EXPOSE 8090
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/pii.jar"]

@@ -1,7 +1,7 @@
 FROM eclipse-temurin:21-jre AS runtime
 RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
-COPY target/alf-tengine-xml-1.0.0-exec.jar xml.jar
+COPY target/alf-tengine-xml-1.1.0-exec.jar xml.jar
 USER alfte
 EXPOSE 8090
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/xml.jar"]

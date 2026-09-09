@@ -6,12 +6,12 @@
 
   <artifactId>alf-tengine-md2html</artifactId>
   <name>Alfresco Transform Extras - Markdown to HTML</name>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
 
   <parent>
     <groupId>org.alfresco.transform.extras</groupId>
     <artifactId>alfresco-transform-extras</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 

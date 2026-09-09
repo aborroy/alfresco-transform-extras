@@ -19,6 +19,18 @@ import java.util.Map;
 public class LiteparseTransformer implements CustomTransformer {
 
     private final LiteparseService liteparseService;
+    private final SpreadsheetService spreadsheetService;
+
+    /**
+     * Spreadsheet source types, which are read cell by cell rather than handed to LiteParse.
+     *
+     * <p>LiteParse reaches a spreadsheet through a LibreOffice page render, so columns that do not fit
+     * the rendered page are lost: a five-column rate card came back with two. Reading cells keeps every
+     * column and yields real Markdown tables, because the grid is already a table.</p>
+     */
+    private static final java.util.Set<String> SPREADSHEET_MIMETYPES = java.util.Set.of(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel");
 
     @Override
     public String getTransformerName() {
@@ -39,7 +51,9 @@ public class LiteparseTransformer implements CustomTransformer {
 
             log.debug("LiteparseTransformer: converting {} ({}) -> {}", inputPath, sourceMimetype, targetMimetype);
 
-            File outputFile = liteparseService.convert(inputPath.toFile(), targetMimetype);
+            File outputFile = SPREADSHEET_MIMETYPES.contains(sourceMimetype)
+                    ? spreadsheetService.convert(inputPath.toFile(), targetMimetype)
+                    : liteparseService.convert(inputPath.toFile(), targetMimetype);
             Files.copy(outputFile.toPath(), outputStream);
         } finally {
             deleteRecursively(workDir.toFile());
@@ -50,6 +64,7 @@ public class LiteparseTransformer implements CustomTransformer {
         return switch (mimetype) {
             case "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> ".docx";
             case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"       -> ".xlsx";
+            case "application/vnd.ms-excel"                                                 -> ".xls";
             case "application/vnd.openxmlformats-officedocument.presentationml.presentation" -> ".pptx";
             case "application/msword"                                                       -> ".doc";
             default                                                                         -> ".pdf";

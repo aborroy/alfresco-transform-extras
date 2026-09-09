@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
-COPY target/alf-tengine-videothumb-1.0.0-exec.jar videothumb.jar
+COPY target/alf-tengine-videothumb-1.1.0-exec.jar videothumb.jar
 USER alfte
 EXPOSE 8090
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/videothumb.jar"]

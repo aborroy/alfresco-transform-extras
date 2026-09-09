@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 1001 alfresco && useradd -u 33050 -g alfresco -m alfte
 WORKDIR /app
-COPY target/alf-tengine-pdf2docx-1.0.0-exec.jar pdf2docx.jar
+COPY target/alf-tengine-pdf2docx-1.1.0-exec.jar pdf2docx.jar
 USER alfte
 EXPOSE 8090
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/pdf2docx.jar"]
